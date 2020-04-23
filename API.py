@@ -41,7 +41,7 @@ params = cgi.FieldStorage()
 print('got this: ')
 print(json.dumps(params))
 
-
+# connect DB in the server
 connection = pymysql.connect(host='localhost',
                              user='iotdev',
                              password='iotdb190',
@@ -74,6 +74,29 @@ if params['cmd'].value == "GROUPS":
     print('{"groups" : ')
     print(data)
     print('}')
+
+if paramsp['cmd'].value == 'REG':
+    mac = '22:22:33:55'
+    sql = "SELECT * FROM iotdb.devices WHERE devices.mac = %s" % mac
+    res = cursor.execute(sql)
+    print(res)
+    data = str(data)
+    data = data.replace("u\'", "\'")
+    data = data.replace("\'", "\"")
+    print('{"reg" : ')
+    print(data)
+    print('}')
+
+# if paramsp['cmd'].value == 'LOG':
+#     mac = '22:22:33:55'
+#     sql = "SELECT * FROM iotdb.devices WHERE devices.mac = %s" % mac
+#     cursor.execute(sql)
+#     data = str(data)
+#     data = data.replace("u\'", "\'")
+#     data = data.replace("\'", "\"")
+#     print('{"reg" : ')
+#     print(data)
+#     print('}')
 
 cursor.close()
 connection.close()
