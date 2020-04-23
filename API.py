@@ -9,6 +9,7 @@ from datetime import date
 from datetime import datetime
 
 #import cgitb
+import cgi
 #cgitb.enable()
 
 print("Content-Type: text/html")
@@ -34,6 +35,7 @@ print("GET Len:",param_len)
 
 
 #POST interface
+print(cgi.FieldStorage())
 params = json.load(sys.stdin)
 #params = json.loads('{"cmd":"LIST"}')
 
