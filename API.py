@@ -4,7 +4,7 @@ import pymysql
 import sys
 import json
 import requests
-from flask import Flask, request
+# from flask import Flask, request
 from datetime import date
 from datetime import datetime
 
@@ -12,8 +12,11 @@ from datetime import datetime
 import cgi
 #cgitb.enable()
 
+groupID = 'gid03'
+time = datetime.now()
+
 print("Content-Type: text/html")
-print("")
+print("datetime:", time)
 
 print("DSC190 API")
 
@@ -76,10 +79,14 @@ if params['cmd'].value == "GROUPS":
     print('}')
 
 if paramsp['cmd'].value == 'REG':
+    # dummy params; replace latter
     mac = '22:22:33:55'
-    sql = "SELECT * FROM iotdb.devices WHERE devices.mac = %s" % mac
-    res = cursor.execute(sql)
+    check_sql = "SELECT * FROM iotdb.devices WHERE devices.mac = %s" % mac
+    res = cursor.execute(check_sql)
     print(res)
+    # if the device is not registered
+    insert_sql = "INSERT INTO iotdb.devices(mac, groupID, lastseen) \
+                  VALUES({0}, {1}, {2})".format(mac,groupID, time)
     data = str(data)
     data = data.replace("u\'", "\'")
     data = data.replace("\'", "\"")
@@ -87,16 +94,17 @@ if paramsp['cmd'].value == 'REG':
     print(data)
     print('}')
 
-# if paramsp['cmd'].value == 'LOG':
-#     mac = '22:22:33:55'
-#     sql = "SELECT * FROM iotdb.devices WHERE devices.mac = %s" % mac
-#     cursor.execute(sql)
-#     data = str(data)
-#     data = data.replace("u\'", "\'")
-#     data = data.replace("\'", "\"")
-#     print('{"reg" : ')
-#     print(data)
-#     print('}')
+if paramsp['cmd'].value == 'LOG':
+    mac = '22:22:33:55'
+    sql = "INSERT INTO iotdb.testlogs(mac, ts, temp, hum) \
+           VALUES({0}, {1}, {2}, {3})".format(mac, ts, temp, hum)
+    cursor.execute(sql)
+    data = str(data)
+    data = data.replace("u\'", "\'")
+    data = data.replace("\'", "\"")
+    print('{"reg" : ')
+    print(data)
+    print('}')
 
 cursor.close()
 connection.close()
