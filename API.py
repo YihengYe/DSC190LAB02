@@ -15,24 +15,10 @@ print("Content-Type: text/html")
 print("")
 
 print("DSC190 API")
-"""
-# GET interface
-if(len(sys.argv) <= 1):
-   print("no arg provided!")
-   #sys.exit()
-
-print(sys.argv)
-print(sys.stdin)
-
-params = {x.split("@")[0]:x.split("@")[1] for x in sys.argv[1].split("\\&")}
-
-print(sys.argv)
-param_len = len(sys.argv)
-print("GET Len:",param_len)
-"""
 
 
-#GET URL, see my example urls at bottom
+
+#GET URL, see my example urls at bottom, we write four functions together
 if os.environ['REQUEST_METHOD']=='GET':
     pass
 else:
@@ -84,7 +70,7 @@ if params['cmd'].value == "GROUPS":
 
 if params['cmd'].value == 'REG':
     mac = params['mac'].value
-    check_sql = "SELECT * FROM iotdb.devices WHERE iotdb.devices.mac = %s" % mac
+    check_sql = "SELECT * FROM iotdb.devices WHERE iotdb.devices.mac = '%s'" % mac
     cursor.execute(check_sql)
     data=cursor.fetchall()
     # if the device is not registered
@@ -136,6 +122,6 @@ http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py?cmd=LIST&gid=2211
 http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py?cmd=GROUPS
 http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py?cmd=GROUPS&gid=3
 http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py?cmd=LOG&mac=11:22:33:44&t=10&h=10
-http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py?cmd=REG&mac=12345678&gid=2211
+http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py?cmd=REG&mac=22:33:44:55&gid=2211
 
 """
