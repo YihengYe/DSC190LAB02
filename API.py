@@ -107,18 +107,22 @@ if params['cmd'].value == 'REG':
     print(result)
 
 
-"""
+
 if params['cmd'].value == 'LOG':
-    mac = '22:22:33:55'
+    mac = params['mac'].value
     sql = "INSERT INTO iotdb.testlogs(mac, ts, temp, hum) \
-           VALUES({0}, {1}, {2}, {3})".format(mac, ts, temp, hum)
-    cursor.execute(sql)
-    data = str(data)
-    data = data.replace("u\'", "\'")
-    data = data.replace("\'", "\"")
-    print('{"reg" : ')
-    print(data)
-    print('}')
-"""
+           VALUES({0}, {1}, {2}, {3})".format(mac, time, params['t'].value, params['h'].value)
+    try:
+        cursor.execute(sql)
+        connection.commit()
+        status='OK'
+    except Exception as e:
+        print(e)
+        status="failed"
+    result={}
+    result['timestamp']=time
+    result['status']=status
+    print(result)
+    
 cursor.close()
 connection.close()
