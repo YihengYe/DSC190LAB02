@@ -85,8 +85,9 @@ if paramsp['cmd'].value == 'REG':
     res = cursor.execute(check_sql)
     print(res)
     # if the device is not registered
-    insert_sql = "INSERT INTO iotdb.devices(mac, groupID, lastseen) \
-                  VALUES({0}, {1}, {2})".format(mac,groupID, time)
+    if (len(res）< 1):
+        insert_sql = "INSERT INTO iotdb.devices(mac, groupID, lastseen) \
+                    VALUES({0}, {1}, {2})".format(mac,groupID, time)
     data = str(data)
     data = data.replace("u\'", "\'")
     data = data.replace("\'", "\"")
