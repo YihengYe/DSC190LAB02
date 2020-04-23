@@ -4,22 +4,17 @@ import pymysql
 import sys
 import json
 import requests
-# from flask import Flask, request
+from flask import Flask, request
 from datetime import date
 from datetime import datetime
 
 #import cgitb
-import cgi
+import cgi, cgitb
 #cgitb.enable()
-
-groupID = 'gid03'
-time = datetime.now()
-
 print("Content-Type: text/html")
-print("datetime:", time)
+print("")
 
 print("DSC190 API")
-
 """
 # GET interface
 if(len(sys.argv) <= 1):
@@ -37,12 +32,10 @@ print("GET Len:",param_len)
 """
 
 
-#POST interface
+#GET URL
 params = cgi.FieldStorage()
-#params = json.loads('{"cmd":"LIST"}')
-
-print('got this: new version')
-print(json.dumps(params))
+time=datetime.now()
+time=time.strftime('%Y-%m-%d %H:%M:%S')
 
 # connect DB in the server
 connection = pymysql.connect(host='localhost',
@@ -55,7 +48,10 @@ connection = pymysql.connect(host='localhost',
 cursor = connection.cursor()
 
 if params['cmd'].value == "LIST":
-    sql = "SELECT * FROM iotdb.devices"
+    if "gid" not in params.keys():
+        sql = "SELECT * FROM iotdb.devices"
+    else:
+        sql= "SELECT * FROM iotdb.devices WHERE groupID="+ params['gid'].value
     cursor.execute(sql)
     data = cursor.fetchall()
     for item in data:
@@ -68,7 +64,10 @@ if params['cmd'].value == "LIST":
     print('}')
 
 if params['cmd'].value == "GROUPS":
-    sql = "SELECT groupName,Student_1,Student_2 FROM iotdb.groups"
+    if "gid" not in params.keys():
+        sql = "SELECT groupName,Student_1,Student_2 FROM iotdb.groups"
+    else:
+        sql= "SELECT groupName,Student_1,Student_2 FROM iotdb.groups WHERE groupID=" + params['gid'].value
     cursor.execute(sql)
     data = cursor.fetchall()
     data = str(data)
@@ -78,24 +77,38 @@ if params['cmd'].value == "GROUPS":
     print(data)
     print('}')
 
-if paramsp['cmd'].value == 'REG':
-    # dummy params; replace latter
-    mac = '22:22:33:55'
+if params['cmd'].value == 'REG':
+    mac = params['mac'].value
     check_sql = "SELECT * FROM iotdb.devices WHERE iotdb.devices.mac = %s" % mac
-    res = cursor.execute(check_sql)
-    print(res)
+    cursor.execute(check_sql)
+    data=cursor.fetchall()
+    print("good")
+    print(len(data))
     # if the device is not registered
-    if (len(res）< 1):
-        insert_sql = "INSERT INTO iotdb.devices(mac, groupID, lastseen) \
-                    VALUES({0}, {1}, {2})".format(mac,groupID, time)
-    data = str(data)
-    data = data.replace("u\'", "\'")
-    data = data.replace("\'", "\"")
-    print('{"reg" : ')
-    print(data)
-    print('}')
+    if len(data)<1:
+        divi_sql = "INSERT INTO iotdb.devices(mac, groupID, lastseen) \
+                    VALUES({0}, {1}, {2})".format(mac,params['gid'].value, time)
+    else:
+        divi_sql="UPDATE iot.devices \
+            SET lastseen={0}, groupID={1} \
+            WHERE mac={2}".format(time, params['gid'].value, mac) 
+    print('still good')
+    try:
+        cursor.execute(divi_sql)
+        connection.commit()
+        status='OK'
+    except Exception as e:
+        status='failed'
+        print(e)
+    result={}
+    result['mac']=mac
+    result['time']=time
+    result['status']=status
+    print(result)
 
-if paramsp['cmd'].value == 'LOG':
+
+"""
+if params['cmd'].value == 'LOG':
     mac = '22:22:33:55'
     sql = "INSERT INTO iotdb.testlogs(mac, ts, temp, hum) \
            VALUES({0}, {1}, {2}, {3})".format(mac, ts, temp, hum)
@@ -106,6 +119,6 @@ if paramsp['cmd'].value == 'LOG':
     print('{"reg" : ')
     print(data)
     print('}')
-
+"""
 cursor.close()
 connection.close()
