@@ -55,7 +55,7 @@ connection = pymysql.connect(host='localhost',
 cursor = connection.cursor()
 
 if params['cmd'].value == "LIST":
-    sql = "SELECT * FROM devices"
+    sql = "SELECT * FROM iotdb.devices"
     cursor.execute(sql)
     data = cursor.fetchall()
     for item in data:
@@ -68,7 +68,7 @@ if params['cmd'].value == "LIST":
     print('}')
 
 if params['cmd'].value == "GROUPS":
-    sql = "SELECT groupName,Student_1,Student_2 FROM groups"
+    sql = "SELECT groupName,Student_1,Student_2 FROM iotdb.groups"
     cursor.execute(sql)
     data = cursor.fetchall()
     data = str(data)
@@ -81,7 +81,7 @@ if params['cmd'].value == "GROUPS":
 if paramsp['cmd'].value == 'REG':
     # dummy params; replace latter
     mac = '22:22:33:55'
-    check_sql = "SELECT * FROM iotdb.devices WHERE devices.mac = %s" % mac
+    check_sql = "SELECT * FROM iotdb.devices WHERE iotdb.devices.mac = %s" % mac
     res = cursor.execute(check_sql)
     print(res)
     # if the device is not registered
