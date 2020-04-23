@@ -41,7 +41,7 @@ print("GET Len:",param_len)
 params = cgi.FieldStorage()
 #params = json.loads('{"cmd":"LIST"}')
 
-print('got this: ')
+print('got this: new version')
 print(json.dumps(params))
 
 # connect DB in the server
