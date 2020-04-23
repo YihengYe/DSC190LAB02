@@ -16,7 +16,7 @@ print("")
 
 print("DSC190 API")
 
-
+"""
 # GET interface
 if(len(sys.argv) <= 1):
    print("no arg provided!")
@@ -30,6 +30,7 @@ params = {x.split("@")[0]:x.split("@")[1] for x in sys.argv[1].split("\\&")}
 print(sys.argv)
 param_len = len(sys.argv)
 print("GET Len:",param_len)
+"""
 
 
 #POST interface
