@@ -35,8 +35,7 @@ print("GET Len:",param_len)
 
 
 #POST interface
-print(cgi.FieldStorage())
-params = json.load(sys.stdin)
+params = cgi.FieldStorage()
 #params = json.loads('{"cmd":"LIST"}')
 
 print('got this: ')
@@ -52,7 +51,7 @@ connection = pymysql.connect(host='localhost',
 
 cursor = connection.cursor()
 
-if params['cmd'] == "LIST":
+if params['cmd'].value == "LIST":
     sql = "SELECT * FROM devices"
     cursor.execute(sql)
     data = cursor.fetchall()
@@ -65,7 +64,7 @@ if params['cmd'] == "LIST":
     print(data)
     print('}')
 
-if params['cmd'] == "GROUPS":
+if params['cmd'].value == "GROUPS":
     sql = "SELECT groupName,Student_1,Student_2 FROM groups"
     cursor.execute(sql)
     data = cursor.fetchall()
