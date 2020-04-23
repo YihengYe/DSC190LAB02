@@ -32,7 +32,12 @@ print("GET Len:",param_len)
 """
 
 
-#GET URL
+#GET URL, see my example urls at bottom
+if os.environ['REQUEST_METHOD']=='GET':
+    pass
+else:
+    print('only GET is supportted')
+    sys.exit(0)
 params = cgi.FieldStorage()
 time=datetime.now()
 time=time.strftime('%Y-%m-%d %H:%M:%S')
@@ -82,17 +87,14 @@ if params['cmd'].value == 'REG':
     check_sql = "SELECT * FROM iotdb.devices WHERE iotdb.devices.mac = %s" % mac
     cursor.execute(check_sql)
     data=cursor.fetchall()
-    print("good")
-    print(len(data))
     # if the device is not registered
     if len(data)<1:
         divi_sql = "INSERT INTO iotdb.devices(mac, groupID, lastseen) \
-                    VALUES({0}, {1}, {2})".format(mac,params['gid'].value, time)
+                    VALUES('{0}', '{1}', '{2}')".format(mac,params['gid'].value, time)
     else:
-        divi_sql="UPDATE iot.devices \
-            SET lastseen={0}, groupID={1} \
-            WHERE mac={2}".format(time, params['gid'].value, mac) 
-    print('still good')
+        divi_sql="UPDATE iotdb.devices \
+            SET lastseen='{0}', groupID='{1}' \
+            WHERE mac='{2}'".format(time, params['gid'].value, mac) 
     try:
         cursor.execute(divi_sql)
         connection.commit()
@@ -111,7 +113,7 @@ if params['cmd'].value == 'REG':
 if params['cmd'].value == 'LOG':
     mac = params['mac'].value
     sql = "INSERT INTO iotdb.testlogs(mac, ts, temp, hum) \
-           VALUES({0}, {1}, {2}, {3})".format(mac, time, params['t'].value, params['h'].value)
+           VALUES('{0}', '{1}', '{2}', '{3}')".format(mac, time, params['t'].value, params['h'].value)
     try:
         cursor.execute(sql)
         connection.commit()
@@ -126,3 +128,14 @@ if params['cmd'].value == 'LOG':
     
 cursor.close()
 connection.close()
+
+"""
+examples: (All methods are GET)
+http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py?cmd=LIST
+http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py?cmd=LIST&gid=2211
+http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py?cmd=GROUPS
+http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py?cmd=GROUPS&gid=3
+http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py?cmd=LOG&mac=11:22:33:44&t=10&h=10
+http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py?cmd=REG&mac=12345678&gid=2211
+
+"""
