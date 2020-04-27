@@ -120,16 +120,18 @@ def post_reg(params, cursor):
 
     # if the device is not registered, insert the new
     if len(data) < 1:
-        divi_sql = "INSERT INTO iotdb.devices(mac, groupID, ip) \
-                    VALUES('{0}', '{1}', '{2}')".format(mac, 
+        divi_sql = "INSERT INTO iotdb.devices(mac, groupID, ip, lastseen) \
+                    VALUES('{0}', '{1}', '{2}', '{3}')".format(mac, 
                     params['gid'], 
-                    params['ip'])
+                    params['ip'],
+                    time)
     # if an existing device, update the origin
     else:
         divi_sql="UPDATE iotdb.devices \
-            SET ip='{0}', groupID='{1}' \
-            WHERE mac='{2}'".format(params['ip'],
+            SET ip='{0}', groupID='{1}', lastseen='{2}' \
+            WHERE mac='{3}'".format(params['ip'],
              params['gid'], 
+             time,
              mac) 
     try:
         execute_sql(divi_sql, cursor)
@@ -148,16 +150,18 @@ def post_logdev(params, cursor):
     data = execute_sql(query, cursor)
     # if the device is not registered, insert the new
     if len(data) < 1:
-        divi_sql = "INSERT INTO iotdb.devlogs(mac, groupID, RSSI) \
-                    VALUES('{0}', '{1}', '{2}')".format(mac, 
+        divi_sql = "INSERT INTO iotdb.devlogs(mac, groupID, RSSI, lastseen) \
+                    VALUES('{0}', '{1}', '{2}', '{3}')".format(mac, 
                     params['gid'], 
-                    params['RSSI'])
+                    params['RSSI'],
+                    time)
     # if an existing device, update the origin
     else:
         divi_sql="UPDATE iotdb.devlogs \
-            SET RSSI='{0}', groupID='{1}' \
-            WHERE mac='{2}'".format(params['RSSI'],
+            SET RSSI='{0}', groupID='{1}', lastseen='{2}'\
+            WHERE mac='{3}'".format(params['RSSI'],
              params['gid'], 
+             time,
              mac) 
     try:
         execute_sql(divi_sql, cursor)
