@@ -113,6 +113,63 @@ def get_log(params, cursor):
 
     format_result(['timestamp', 'status'], [time, status])
 
+def post_reg(params, cursor):
+    mac = params['mac']
+    query = "SELECT * FROM iotdb.devices WHERE iotdb.devices.mac = '%s'" % mac
+    data = execute_sql(query, cursor)
+
+    # if the device is not registered, insert the new
+    if len(data) < 1:
+        divi_sql = "INSERT INTO iotdb.devices(mac, groupID, ip) \
+                    VALUES('{0}', '{1}', '{2}')".format(mac, 
+                    params['gid'], 
+                    params['ip'])
+    # if an existing device, update the origin
+    else:
+        divi_sql="UPDATE iotdb.devices \
+            SET ip='{0}', groupID='{1}' \
+            WHERE mac='{2}'".format(params['ip'],
+             params['gid'], 
+             mac) 
+    try:
+        execute_sql(divi_sql, cursor)
+        connection.commit()
+        status='successed'
+        
+    except Exception as err:
+        status = 'failed'
+        print(err)
+
+    format_result(['mac', 'time', 'status'], [mac, time, status])
+
+def post_logdev(params, cursor):
+    mac = params['mac']
+    query = "SELECT * FROM iotdb.devlogs WHERE iotdb.devlogs.mac = '%s'" % mac
+    data = execute_sql(query, cursor)
+    # if the device is not registered, insert the new
+    if len(data) < 1:
+        divi_sql = "INSERT INTO iotdb.devlogs(mac, groupID, RSSI) \
+                    VALUES('{0}', '{1}', '{2}')".format(mac, 
+                    params['gid'], 
+                    params['RSSI'])
+    # if an existing device, update the origin
+    else:
+        divi_sql="UPDATE iotdb.devlogs \
+            SET RSSI='{0}', groupID='{1}' \
+            WHERE mac='{2}'".format(params['RSSI'],
+             params['gid'], 
+             mac) 
+    try:
+        execute_sql(divi_sql, cursor)
+        connection.commit()
+        status='successed'
+        
+    except Exception as err:
+        status = 'failed'
+        print(err)
+
+    format_result(['mac', 'time', 'status'], [mac, time, status])
+
 
 def main():
 
@@ -122,11 +179,17 @@ def main():
 
     #GET URL, see my example urls at bottom, we write four functions together
     if os.environ['REQUEST_METHOD']=='GET':
-        pass
+        ger=True
+    elif os.environ['REQUEST_METHOD']=='POST':
+        ger=False
     else:
-        print('only GET is supportted')
+        print('only GET and POST are supportted')
         sys.exit(0)
-    params = cgi.FieldStorage()
+    if ger:
+        params = cgi.FieldStorage()
+    else:
+        params=json.load(sys.stdin)
+        print(json.dumps(params))
     # print(params.value)
     global time
     time = get_global_time()
@@ -141,18 +204,23 @@ def main():
                                 )
 
     cursor = connection.cursor()
+    if ger:
+        if params['cmd'].value.upper() == 'LIST':
+            get_list(params, cursor)
 
-    if params['cmd'].value.upper() == 'LIST':
-        get_list(params, cursor)
+        if params['cmd'].value.upper() == 'GROUPS':
+            get_groups(params, cursor)
 
-    if params['cmd'].value.upper() == 'GROUPS':
-        get_groups(params, cursor)
+        if params['cmd'].value.upper() == 'REG':
+            get_reg(params, cursor)
 
-    if params['cmd'].value.upper() == 'REG':
-        get_reg(params, cursor)
-
-    if params['cmd'].value.upper() == 'LOG':
-        get_log(params, cursor)
+        if params['cmd'].value.upper() == 'LOG':
+            get_log(params, cursor)
+    else:
+        if params['cmd']=='REG':
+            post_reg(params, cursor)
+        if params['cmd']=='LOGDEV':
+            post_logdev(params, cursor)
 
     cursor.close()
     connection.close()
