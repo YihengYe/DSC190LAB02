@@ -43,11 +43,19 @@ def get_global_time(time_format = '%Y-%m-%d %H:%M:%S'):
     return out
 
 
-def get_list(params, cursor):
-    if "gid" not in params.keys():
+def get_list(params, cursor, is_get):
+    try:
+        if is_get:
+            gid = params['gid'].value
+        else:
+            gid = params['gid']
+    except:
+        gid = None
+    
+    if (not gid):
         sql = "SELECT * FROM iotdb.devices"
     else:
-        sql= "SELECT * FROM iotdb.devices WHERE groupID=%s" % params['gid'].value
+        sql = "SELECT * FROM iotdb.devices WHERE groupID=%s" % gid
 
     data = execute_sql(sql, cursor)
     for item in data:
@@ -56,17 +64,27 @@ def get_list(params, cursor):
     display_data(data, 'devices')
 
 
-def get_groups(params, cursor):
+def get_groups(params, cursor, is_get):
     if 'gid' not in params.keys():
         sql = "SELECT groupName,Student_1,Student_2 FROM iotdb.groups"
     else:
-        sql= "SELECT groupName,Student_1,Student_2 FROM iotdb.groups WHERE groupID=%s" % params['gid'].value
+        if is_get:
+            gid = params['gid'].value
+        else:
+            gid = params['gid']
+        sql= "SELECT groupName,Student_1,Student_2 FROM iotdb.groups WHERE groupID=%s" % gid
     data = execute_sql(sql, cursor)
     display_data(data, 'groups')
     
 
-def get_reg(params, cursor):
-    mac = params['mac'].value
+def get_reg(params, cursor, is_get):
+    if is_get:
+        mac = params['mac'].value
+        gid = params['gid'].value
+    else:
+        mac = params['mac']
+        gid = params['gid']
+
     query = "SELECT * FROM iotdb.devices WHERE iotdb.devices.mac = '%s'" % mac
     data = execute_sql(query, cursor)
 
@@ -74,14 +92,14 @@ def get_reg(params, cursor):
     if len(data) < 1:
         divi_sql = "INSERT INTO iotdb.devices(mac, groupID, lastseen) \
                     VALUES('{0}', '{1}', '{2}')".format(mac, 
-                    params['gid'].value, 
+                    gid, 
                     time)
     # if an existing device, update the origin
     else:
         divi_sql="UPDATE iotdb.devices \
             SET lastseen='{0}', groupID='{1}' \
             WHERE mac='{2}'".format(time,
-             params['gid'].value, 
+             gid, 
              mac) 
     try:
         execute_sql(divi_sql, cursor)
@@ -95,10 +113,15 @@ def get_reg(params, cursor):
     format_result(['mac', 'time', 'status'], [mac, time, status])
 
 
-def get_log(params, cursor):
-    mac = params['mac'].value
-    temp = params['t'].value
-    hum = params['h'].value
+def get_log(params, cursor, is_get):
+    if is_get:
+        mac = params['mac'].value
+        temp = params['t'].value
+        hum = params['h'].value
+    else:
+        mac = params['mac']
+        temp = params['t']
+        hum = params['h']
 
     sql = "INSERT INTO iotdb.testlogs(mac, ts, temp, hum) \
            VALUES('{0}', '{1}', '{2}', '{3}')".format(mac, time, temp, hum)
@@ -113,38 +136,41 @@ def get_log(params, cursor):
 
     format_result(['timestamp', 'status'], [time, status])
 
-def post_reg(params, cursor):
-    mac = params['mac']
-    query = "SELECT * FROM iotdb.devices WHERE iotdb.devices.mac = '%s'" % mac
-    data = execute_sql(query, cursor)
 
-    # if the device is not registered, insert the new
-    if len(data) < 1:
-        divi_sql = "INSERT INTO iotdb.devices(mac, groupID, ip, lastseen) \
-                    VALUES('{0}', '{1}', '{2}', '{3}')".format(mac, 
-                    params['gid'], 
-                    params['ip'],
-                    time)
-    # if an existing device, update the origin
-    else:
-        divi_sql="UPDATE iotdb.devices \
-            SET ip='{0}', groupID='{1}', lastseen='{2}' \
-            WHERE mac='{3}'".format(params['ip'],
-             params['gid'], 
-             time,
-             mac) 
-    try:
-        execute_sql(divi_sql, cursor)
-        connection.commit()
-        status='successed'
+# def post_reg(params, cursor):
+#     mac = params['mac']
+#     query = "SELECT * FROM iotdb.devices WHERE iotdb.devices.mac = '%s'" % mac
+#     data = execute_sql(query, cursor)
+
+#     # if the device is not registered, insert the new
+#     if len(data) < 1:
+#         divi_sql = "INSERT INTO iotdb.devices(mac, groupID, ip, lastseen) \
+#                     VALUES('{0}', '{1}', '{2}', '{3}')".format(mac, 
+#                     params['gid'], 
+#                     params['ip'],
+#                     time)
+#     # if an existing device, update the origin
+#     else:
+#         divi_sql="UPDATE iotdb.devices \
+#             SET ip='{0}', groupID='{1}', lastseen='{2}' \
+#             WHERE mac='{3}'".format(params['ip'],
+#              params['gid'], 
+#              time,
+#              mac) 
+#     try:
+#         execute_sql(divi_sql, cursor)
+#         connection.commit()
+#         status='successed'
         
-    except Exception as err:
-        status = 'failed'
-        print(err)
+#     except Exception as err:
+#         status = 'failed'
+#         print(err)
 
-    format_result(['mac', 'time', 'status'], [mac, time, status])
+#     format_result(['mac', 'time', 'status'], [mac, time, status])
 
-def post_logdev(params, cursor):
+def post_logdev(params, cursor, is_get):
+    assert is_get == False, 'LOGDEV not supported for GET'
+
     mac = params['mac']
     query = "SELECT * FROM iotdb.devlogs WHERE iotdb.devlogs.mac = '%s'" % mac
     data = execute_sql(query, cursor)
@@ -183,17 +209,19 @@ def main():
 
     #GET URL, see my example urls at bottom, we write four functions together
     if os.environ['REQUEST_METHOD']=='GET':
-        ger=True
+        GET=True
     elif os.environ['REQUEST_METHOD']=='POST':
-        ger=False
+        GET=False
     else:
         print('only GET and POST are supportted')
         sys.exit(0)
-    if ger:
+    if GET:
         params = cgi.FieldStorage()
+        cmd_line = params['cmd'].value.upper()
     else:
         params=json.load(sys.stdin)
-        print(json.dumps(params))
+        cmd_line = params['cmd'].upper()
+        # print(json.dumps(params))
     # print(params.value)
     global time
     time = get_global_time()
@@ -208,23 +236,47 @@ def main():
                                 )
 
     cursor = connection.cursor()
-    if ger:
-        if params['cmd'].value.upper() == 'LIST':
-            get_list(params, cursor)
 
-        if params['cmd'].value.upper() == 'GROUPS':
-            get_groups(params, cursor)
+    if cmd_line == 'LIST':
+        get_list(params, cursor, GET)
 
-        if params['cmd'].value.upper() == 'REG':
-            get_reg(params, cursor)
+    if cmd_line == 'GROUPS':
+        get_groups(params, cursor, GET)
 
-        if params['cmd'].value.upper() == 'LOG':
-            get_log(params, cursor)
-    else:
-        if params['cmd']=='REG':
-            post_reg(params, cursor)
-        if params['cmd']=='LOGDEV':
-            post_logdev(params, cursor)
+    if cmd_line == 'REG':
+        get_reg(params, cursor, GET)
+
+    if cmd_line == 'LOG':
+        get_log(params, cursor, GET)
+
+    if cmd_line == 'LOGDEV':
+        post_logdev(params, cursor, GET)
+
+
+  #   if GET:
+  #       if params['cmd'].value.upper() == 'LIST':
+  #           get_list(params, cursor)
+
+  #       if params['cmd'].value.upper() == 'GROUPS':
+  #           get_groups(params, cursor)
+
+  #       if params['cmd'].value.upper() == 'REG':
+  #           get_reg(params, cursor)
+
+  #       if params['cmd'].value.upper() == 'LOG':
+  #           get_log(params, cursor)
+  #   else:
+  #   	if params['cmd'] == 'LIST':
+  #   		post_list(params, cursor)
+
+		# if params['cmd'] == 'GROUPS':
+  #   		post_groups(params, cursor)
+
+  #       if params['cmd'] == 'REG':
+  #           post_reg(params, cursor)
+
+  #       if params['cmd'] == 'LOGDEV':
+  #           post_logdev(params, cursor)
 
     cursor.close()
     connection.close()
