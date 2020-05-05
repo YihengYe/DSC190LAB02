@@ -115,18 +115,39 @@ def get_reg(params, cursor, is_get):
 
 def get_log(params, cursor, is_get):
     if is_get:
-        mac = params['mac'].value
-        temp = params['t'].value
-        hum = params['h'].value
+        gid = params['gid'].value
+        blemac = params['blemac'].value
+        devmac = params['devmac'].value
+        blerssi=params['blerssi'].value
     else:
-        mac = params['mac']
-        temp = params['t']
-        hum = params['h']
+        gid = params['gid']
+        blemac = params['blemac']
+        devmac = params['devmac']
+        blerssi=params['blerssi']
 
-    sql = "INSERT INTO iotdb.testlogs(mac, ts, temp, hum) \
-           VALUES('{0}', '{1}', '{2}', '{3}')".format(mac, time, temp, hum)
+    sql = "INSERT INTO iotdb.blelogs(gid, devmac, blemac, blerssi, timestamp) \
+           VALUES('{0}', '{1}', '{2}', '{3}','{4}')".format(gid, devmac, blemac, blerssi, time)
+    query = "SELECT * FROM iotdb.devlogs WHERE iotdb.devlogs.mac = '%s'" % blemac
+    data = execute_sql(query, cursor)
+    # if the device is not registered, insert the new
+    if len(data) < 1:
+        divi_sql = "INSERT INTO iotdb.devlogs(mac, groupID, RSSI, lastseen) \
+                    VALUES('{0}', '{1}', '{2}', '{3}')".format(blemac, 
+                    gid, 
+                    blerssi,
+                    time)
+    # if an existing device, update the origin
+    else:
+        divi_sql="UPDATE iotdb.devlogs \
+            SET RSSI='{0}', groupID='{1}', lastseen='{2}'\
+            WHERE mac='{3}'".format(blerssi,
+             gid, 
+             time,
+             blemac) 
     try:
         execute_sql(sql, cursor)
+        connection.commit()
+        execute_sql(divi_sql, cursor)
         connection.commit()
 
         status='successed'
