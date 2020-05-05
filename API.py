@@ -127,21 +127,19 @@ def get_log(params, cursor, is_get):
 
     sql = "INSERT INTO iotdb.blelogs(gid, devmac, blemac, blerssi, timestamp) \
            VALUES('{0}', '{1}', '{2}', '{3}','{4}')".format(gid, devmac, blemac, blerssi, time)
-    query = "SELECT * FROM iotdb.devlogs WHERE iotdb.devlogs.mac = '%s'" % blemac
+    query = "SELECT * FROM iotdb.devices WHERE iotdb.devices.mac = '%s'" % blemac
     data = execute_sql(query, cursor)
     # if the device is not registered, insert the new
     if len(data) < 1:
-        divi_sql = "INSERT INTO iotdb.devlogs(mac, groupID, RSSI, lastseen) \
-                    VALUES('{0}', '{1}', '{2}', '{3}')".format(blemac, 
+        divi_sql = "INSERT INTO iotdb.devices(mac, groupID, lastseen) \
+                    VALUES('{0}', '{1}', '{2}')".format(blemac, 
                     gid, 
-                    blerssi,
                     time)
     # if an existing device, update the origin
     else:
-        divi_sql="UPDATE iotdb.devlogs \
-            SET RSSI='{0}', groupID='{1}', lastseen='{2}'\
-            WHERE mac='{3}'".format(blerssi,
-             gid, 
+        divi_sql="UPDATE iotdb.devices \
+            SET groupID='{0}', lastseen='{1}'\
+            WHERE mac='{2}'".format(gid,
              time,
              blemac) 
     try:
