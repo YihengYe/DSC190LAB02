@@ -24,7 +24,7 @@ def display_data(data, title = ''):
     data = data.replace("u\'", "\'")
     data = data.replace("\'", "\"")
     print('{"%s" : ' % title)
-    print(data)
+    print(data.replace('None', "\"null\""))
     print('}')
 
 
@@ -256,7 +256,7 @@ def main():
 
     print("Content-Type: text/html")
     print("")
-    print("DSC190 API version 0.0.3")
+    # print("DSC190 API version 0.0.3")
 
     #GET URL, see my example urls at bottom, we write four functions together
     if os.environ['REQUEST_METHOD']=='GET':
@@ -302,7 +302,6 @@ def main():
 
     if cmd_line == 'LOGDEV':
         post_logdev(params, cursor, GET)
-        
     if cmd_line =='BLELIST':
         get_blelist(params, cursor, GET)
 
