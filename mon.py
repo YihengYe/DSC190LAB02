@@ -50,7 +50,7 @@ def process_db():
 				sql_warning="UPDATE iotdb.devices SET status='{0}'\
 			 		WHERE mac='{1}' AND groupID=3".format(warning, mac)
 				cursor.excute(sql_warning)
-				cursor.commit()
+				connection.commit()
 
 		elif st==warning:
 			sql4="SELECT * FROM iotdb.blelogs WHERE gid=3 AND now()< DATE_ADD(timestamp, INTERVAL 30 SECOND)\
@@ -61,12 +61,12 @@ def process_db():
 				sql_ok="UPDATE iotdb.devices SET status='{0}'\
 			 		WHERE mac='{1}' AND groupID=3".format(ok, mac)
 				cursor.excute(sql_ok)
-				cursor.commit()
+				connection.commit()
 		else:
 			cursor.excute(sql_timeout)
-			cursor.commit()
+			connection.commit()
 			cursor.excute(sql_error)
-			cursor.commit()
+			connection.commit()
 
 
 
