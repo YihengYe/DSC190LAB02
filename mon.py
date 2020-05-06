@@ -28,7 +28,7 @@ def process_db():
 	warning='WARNING'
 	print(now.strftime("%Y-%m-%d %H:%M:%S")," I'm checking for timeout")
 	sql='SELECT DISTINCT blemac FROM iotdb.blelogs WHERE gid=3'
-	cursor.excute(sql)
+	cursor.execute(sql)
 	devs=cursor.fetchall()
 	for dev in devs:
 		mac=dev['blemac']
@@ -38,34 +38,34 @@ def process_db():
 			 WHERE now()> DATE_ADD(lastseen, INTERVAL 60 SECOND) \
 				 AND mac='{1}' AND groupID=3 AND status='{2}'".format(error, mac, timeout)
 		sql2="SELECT status FROM iotdb.devices WHERE groupID=3 AND mac='{0}'".format(mac)
-		cursor.excute(sql2)
+		cursor.execute(sql2)
 		st1=cursor.fetchall()[0]
 		st=st1['status']
 		if st==timeout or st==error:
 			sql3="SELECT * FROM iotdb.blelogs WHERE gid=3 AND now()< DATE_ADD(timestamp, INTERVAL 15 SECOND)\
 				AND mac='{0}'".format(mac)
-			cursor.excute(sql3)
+			cursor.execute(sql3)
 			data=cursor.fetchall()
 			if len(data)>=1:
 				sql_warning="UPDATE iotdb.devices SET status='{0}'\
 			 		WHERE mac='{1}' AND groupID=3".format(warning, mac)
-				cursor.excute(sql_warning)
+				cursor.execute(sql_warning)
 				connection.commit()
 
 		elif st==warning:
 			sql4="SELECT * FROM iotdb.blelogs WHERE gid=3 AND now()< DATE_ADD(timestamp, INTERVAL 30 SECOND)\
 				AND mac='{0}'".format(mac)
-			cursor.excute(sql4)
+			cursor.execute(sql4)
 			data=cursor.fetchall()
 			if len(data)>=3:
 				sql_ok="UPDATE iotdb.devices SET status='{0}'\
 			 		WHERE mac='{1}' AND groupID=3".format(ok, mac)
-				cursor.excute(sql_ok)
+				cursor.execute(sql_ok)
 				connection.commit()
 		else:
-			cursor.excute(sql_timeout)
+			cursor.execute(sql_timeout)
 			connection.commit()
-			cursor.excute(sql_error)
+			cursor.execute(sql_error)
 			connection.commit()
 
 
