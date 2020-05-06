@@ -51,6 +51,13 @@ def process_db():
 			 		WHERE mac='{1}' AND groupID=3".format(warning, mac)
 				cursor.execute(sql_warning)
 				connection.commit()
+			else:
+				cursor.execute(sql_timeout)
+				connection.commit()
+				cursor.execute(sql_error)
+				connection.commit()
+
+
 
 		elif st==warning:
 			sql4="SELECT * FROM iotdb.blelogs WHERE gid=3 AND now()< DATE_ADD(timestamp, INTERVAL 30 SECOND)\
