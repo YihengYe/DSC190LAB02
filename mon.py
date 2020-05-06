@@ -33,7 +33,11 @@ def process_db():
 	for dev in devs:
 		mac=dev['mac']
 		sql_timeout="UPDATE iotdb.devices SET status='{0}'\
-			 WHERE mac='{1}' AND groupID=3 ".format(TIMEOUT, mac)
+			 WHERE now()> DATE_ADD(lastseen, INTERVAL 30 SECOND) AND mac='{1}' AND groupID=3 ".format(timeout, mac)
+		sql_error=sql_timeout="UPDATE iotdb.devices SET status='{0}'\
+			 WHERE now()> DATE_ADD(lastseen, INTERVAL 90 SECOND) AND mac='{1}' AND groupID=3 AND status='{2}'"
+			 .format(error, mac, timeout)
+
 
 
 
