@@ -152,8 +152,11 @@ def get_log(params, cursor, is_get):
         dev_update="UPDATE iotdb.devices\
             SET lastseen='{0}' \
             WHERE mac='{1}' AND groupID='{2}'".format(time, devmac, gid)
-        cursor.execute(dev_update)
-        connection.commit()
+        try:
+            cursor.execute(dev_update)
+            connection.commit()
+        except Exception as err:
+            print(err)
         sql = "INSERT INTO iotdb.blelogs(gid, devmac, blemac, blerssi, timestamp) \
             VALUES('{0}', '{1}', '{2}', '{3}','{4}')".format(gid, devmac, blemac, blerssi, time)
         query = "SELECT * FROM iotdb.devices WHERE iotdb.devices.mac = '%s'" % blemac
@@ -299,6 +302,8 @@ def main():
 
     if cmd_line == 'LOGDEV':
         post_logdev(params, cursor, GET)
+    if cmd_line =='BLELIST':
+        get_blelist(params, cursor, GET)
 
 
   #   if GET:
