@@ -63,6 +63,26 @@ def get_list(params, cursor, is_get):
     
     display_data(data, 'devices')
 
+def get_blelist(params, cursor, is_get):
+    try:
+        if is_get:
+            gid = params['gid'].value
+        else:
+            gid = params['gid']
+    except:
+        gid = None
+    
+    if (not gid): # blelog_id
+        sql = "SELECT * FROM iotdb.devices"
+    else:
+        sql = "SELECT * FROM iotdb.devices WHERE groupID=%s" % gid
+
+    data = execute_sql(sql, cursor)
+    for item in data:
+       item['lastseen'] = str(item['lastseen'])
+    
+    display_data(data, 'devices')
+
 
 def get_groups(params, cursor, is_get):
     if 'gid' not in params.keys():
