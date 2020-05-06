@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+
+<html>
+    <head profile="http://www.w3.org/2005/10/profile">
+        
+        <title>CSE191 Data Viewer</title>
+        
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+
+        <link rel="stylesheet" type="text/css" href="tables.css">
+
+        <style>
+        html,body,h1,h2,h3,h4,h5 {font-family: "Open Sans", sans-serif}
+        </style>
+
+    </head>
+
+<body class="w3-theme-l5">
+    
+    <div class="w3-container w3-card w3-white w3-round w3-margin-right w3-margin-left"><br>
+
+        <span class="w3-right w3-opacity">5 Sec</span>
+        <h4>DSC190 IoT Student Groups</h4><br>
+      
+        <div class="w3-row-padding" style="margin:0 -16px">
+            
+            <table class="tableList" id="groupsTable">
+                <thead>
+                    <tr>
+                        <th>Group ID </th>
+                        <th>Group Name </th>
+                        <th>Students </th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>    
+            <br>
+        </div>
+    </div>
+
+	<br>
+    <span id="debugStr"></span>
+
+<script>
+    
+var grpTimer;
+
+var gTable = document.getElementById('groupsTable'); 
+
+var count=0;
+
+// now continuously get server updates
+grpTimer = setInterval(updateGroups, 5000);    // 5 seconds
+
+// get activity update
+updateGroups();
+
+//============== UPDATE Students TABLE =================
+function clearGroups() {
+
+    // clear all except first row
+    var x = gTable.rows.length;
+    for (var i=x-1; i>0; i--)
+        gTable.deleteRow(i);
+    
+}
+
+function refreshGroups(s) {
+
+    var row = gTable.insertRow();
+
+    var cellGID = row.insertCell(0);
+    var cellGName = row.insertCell(1);
+    var cellName = row.insertCell(2);
+
+    // fill cells:
+    cellGName.innerHTML = s.groupName;
+    cellGID.innerHTML = s.groupID;
+    cellName.innerHTML = s.Student_1;
+    if (s.Student_2!=" ")
+    	cellName.innerHTML +=" & "+s.Student_2;
+ 
+}
+
+// load the status of all table entries
+function updateGroups() {
+
+    var xmlhttp = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            var statsObj = JSON.parse(this.responseText);
+            clearGroups();
+            // got data
+            // lets loop thru and fill in the data
+            statsObj.groups.forEach(refreshGroups); 
+        }
+    };
+
+	var jObj;
+
+    jObj = {cmd:"GROUPS"};
+   
+    var jStr = JSON.stringify(jObj);
+
+    //debugStr(jStr);
+    
+    var urlStr = "http://dsc-iot.ucsd.edu/gid03/API.py";
+    xmlhttp.open("POST", urlStr, true);
+    xmlhttp.setRequestHeader('Content-Type', 'application/json');
+    xmlhttp.send(jStr);
+}
+
+
+function debugStr(str) {
+    var x = document.getElementById("debugStr");
+    x.innerHTML = str;
+}
+
+</script>
+
+</body>
+</html> 
