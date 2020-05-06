@@ -73,15 +73,15 @@ def get_blelist(params, cursor, is_get):
         gid = None
     
     if (not gid): # blelog_id
-        sql = "SELECT * FROM iotdb.devices"
+        sql = "SELECT * FROM iotdb.blelogs ORDER BY blelog_id  DESC LIMIT 10"
     else:
-        sql = "SELECT * FROM iotdb.devices WHERE groupID=%s" % gid
+        sql = "SELECT * FROM iotdb.blelogs WHERE gid='{0}' ORDER BY blelog_id DESC LIMIT 10".format(gid)
 
     data = execute_sql(sql, cursor)
     for item in data:
-       item['lastseen'] = str(item['lastseen'])
+       item['timestamp'] = str(item['timestamp'])
     
-    display_data(data, 'devices')
+    display_data(data, 'blelogs')
 
 
 def get_groups(params, cursor, is_get):
