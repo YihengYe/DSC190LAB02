@@ -302,6 +302,7 @@ def main():
 
     if cmd_line == 'LOGDEV':
         post_logdev(params, cursor, GET)
+        
     if cmd_line =='BLELIST':
         get_blelist(params, cursor, GET)
 
