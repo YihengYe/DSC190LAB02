@@ -149,7 +149,11 @@ def get_log(params, cursor, is_get):
             blemac = i['mac']
             devmac = params['devmac']
             blerssi = i['rssi']
-
+        dev_update="UPDATE iotdb.devices\
+            SET lastseen='{0}' \
+            WHERE mac='{1}' AND groupID='{2}'".format(time, devmac, gid)
+        cursor.execute(dev_update)
+        connection.commit()
         sql = "INSERT INTO iotdb.blelogs(gid, devmac, blemac, blerssi, timestamp) \
             VALUES('{0}', '{1}', '{2}', '{3}','{4}')".format(gid, devmac, blemac, blerssi, time)
         query = "SELECT * FROM iotdb.devices WHERE iotdb.devices.mac = '%s'" % blemac
