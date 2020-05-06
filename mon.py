@@ -43,7 +43,7 @@ def process_db():
 		st=st1['status']
 		if st==timeout or st==error:
 			sql3="SELECT * FROM iotdb.blelogs WHERE gid=3 AND now()< DATE_ADD(timestamp, INTERVAL 15 SECOND)\
-				AND mac='{0}'".format(mac)
+				AND blemac='{0}'".format(mac)
 			cursor.execute(sql3)
 			data=cursor.fetchall()
 			if len(data)>=1:
@@ -54,7 +54,7 @@ def process_db():
 
 		elif st==warning:
 			sql4="SELECT * FROM iotdb.blelogs WHERE gid=3 AND now()< DATE_ADD(timestamp, INTERVAL 30 SECOND)\
-				AND mac='{0}'".format(mac)
+				AND blemac='{0}'".format(mac)
 			cursor.execute(sql4)
 			data=cursor.fetchall()
 			if len(data)>=3:
@@ -63,10 +63,23 @@ def process_db():
 				cursor.execute(sql_ok)
 				connection.commit()
 		else:
-			cursor.execute(sql_timeout)
-			connection.commit()
-			cursor.execute(sql_error)
-			connection.commit()
+			if st ==None:
+				sql_timeout_sp="UPDATE iotdb.devices SET status='{0}'\
+			 		WHERE now()> DATE_ADD(lastseen, INTERVAL 30 SECOND) AND mac='{1}' \
+				 AND groupID=3 AND status is null".format(timeout, mac)
+				cursor.execute(sql_timeout_sp)
+				connection.commit()
+				sql_ok_sp="UPDATE iotdb.devices SET status='{0}'\
+			 		WHERE now()< DATE_ADD(lastseen, INTERVAL 30 SECOND) AND mac='{1}' \
+				 AND groupID=3 AND status is null".format(ok, mac)
+				cursor.execute(sql_ok_sp)
+				connection.commit()
+
+			else:
+				cursor.execute(sql_timeout)
+				connection.commit()
+				cursor.execute(sql_error)
+				connection.commit()
 
 
 
