@@ -138,35 +138,44 @@ def get_log(params, cursor, is_get):
         gid = params['gid'].value
         devmac = params['devmac'].value
         ip=params['ip'].value
+        lat=params['dev_lat'].value
+        lon=params['dev_long'].value
     else:
         gid = params['gid']
         devmac = params['devmac']
         ip=params['ip']
+        lat=params['dev_lat']
+        lon=params['dev_long']
     
     check = "SELECT * FROM iotdb.devices WHERE iotdb.devices.mac = '{0}' \
              AND iotdb.devices.groupID = '{1}'".format(devmac, gid)
     data = execute_sql(check, cursor)
     # if the device is not registered, insert the new
     if len(data) < 1:
-        dev_update = "INSERT INTO iotdb.devices(mac, groupID, lastseen, ip) \
-                    VALUES('{0}', '{1}', '{2}', '{3}')".format(devmac, 
+        dev_update = "INSERT INTO iotdb.devices(mac, groupID, lastseen, ip, dev_lat, dev_long) \
+                    VALUES('{0}', '{1}', '{2}', '{3}', '{4}', '{5}')".format(devmac, 
                     gid, 
                     time,
-                    ip)
+                    ip,
+                    lat,
+                    lon)
     # if an existing device, update the origin
     else:
         dev_update="UPDATE iotdb.devices\
-        SET lastseen='{0}',ip='{1}'\
-        WHERE mac='{2}' AND groupID='{3}'".format(time, ip, devmac, gid)
+        SET lastseen='{0}',ip='{1}', dev_lat='{2}', dev_long='{3}'\
+        WHERE mac='{4}' AND groupID='{5}'".format(time, ip, lat, lon, devmac, gid)
         # check null value
         checker=data[0]
         checker_ip=checker['ip']
+        checker_lat=checker['dev_lat']
         if checker_ip==None:
             dev_update="UPDATE iotdb.devices\
-                SET lastseen='{0}',ip='{1}'\
-                WHERE mac='{2}' AND groupID='{3}' AND ip is null".format(time, ip, devmac, gid)
-
-
+            SET lastseen='{0}',ip='{1}', dev_lat='{2}', dev_long='{3}'\
+            WHERE mac='{4}' AND groupID='{5}' AND ip is null".format(time, ip, lat, lon, devmac, gid)
+        if checker_lat==None:
+            dev_update="UPDATE iotdb.devices\
+            SET lastseen='{0}',ip='{1}', dev_lat='{2}', dev_long='{3}'\
+            WHERE mac='{4}' AND groupID='{5}' AND dev_lat is null AND dev_long is null".format(time, ip, lat, lon, devmac, gid)
     try:
         cursor.execute(dev_update)
         connection.commit()
