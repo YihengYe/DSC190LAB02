@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>DSC190 Map Viewer</title>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <meta name="viewport" content="initial-scale=1.0">
+    <meta charset="utf-8">
+    <style>
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map {
+        height: 100%;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+
+    <script>
+
+      // init charts
+    google.charts.load('current', {'packages':['gauge']});
+//      google.charts.setOnLoadCallback(drawGauges);
+
+
+      function initMap() {
+        
+        var ourClass = "null";
+
+        var infowindow = new google.maps.InfoWindow({
+          content: ourClass,
+          maxWidth: 300
+        });
+        
+//        var exLink = '<iframe width=1000 height=600 src="http://cse191iot.ucsd.edu/ian/sample_viewer.html"></iframe>';
+        var exLink = '<iframe width=400 height=400 src="http://dsc-iot.ucsd.edu/ian/small_viewer.html"></iframe>';
+
+        var exinfowindow = new google.maps.InfoWindow({
+          content: exLink,
+          maxWidth: 1000,
+          maxHeight: 600
+        });
+        
+        var ourClassLoc = {lat: 32.881928, lng: -117.233652};
+
+        var map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 15,
+          center: ourClassLoc,
+          title: 'UCSD CSE191'
+        });
+
+        var ourClassMarker = new google.maps.Marker({
+          position: ourClassLoc,
+//          content: ourClass,
+          map: map,
+          title: 'Jason\'s Coffee Shop'
+        });
+        
+        var exampleLoc = {lat: 32.882988, lng: -117.233692};
+        var exampleMarker = new google.maps.Marker({
+          position: exampleLoc,
+//          content: exampleLink,
+          map: map,
+          title: 'Our Example'
+        });
+        
+        // zoom if clicked example
+        ourClassMarker.addListener('click', function() {
+          map.setZoom(18);
+          map.setCenter(ourClassMarker.getPosition());
+        });
+        
+        // display info on mouseover
+        ourClassMarker.addListener('mouseover', function() {
+          // do a popup with current info
+          infowindow.open(map, ourClassMarker);
+          updateDevInfo();
+        });
+        
+        // hide info if move moved away
+        ourClassMarker.addListener('mouseout', function() {
+          // remove popup 
+          infowindow.close();
+        });
+
+        // display info on mouseover
+        exampleMarker.addListener('mouseover', function() {
+          // do a popup with current info
+          exinfowindow.open(map, exampleMarker);
+          updateDevInfo();
+        });
+        
+        function updateDevInfo() {
+            
+            // do some AJAX magic to show updated data
+            var xmlhttp = new XMLHttpRequest();
+
+            xmlhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                	
+                    var statsObj = JSON.parse(this.responseText);
+                    var mac = statsObj.device[0].mac;
+                    var ts = statsObj.device[0].lastseen;
+                    var group_name = statsObj.device[0].groupName;
+                    var gid = statsObj.device[0].groupID;
+                    var rssi = statsObj.device[0].rssi;
+                    //ourClass = group_name+" ("+gid+")<br> MAC ("+mac+")<br>Time: "+ts;
+                    ourClass = '<center>'+group_name+' ('+gid+')</center>';
+                    ourClass += '<table><tr>';
+                    ourClass += '<td><div id="RSSIchart_div"></div></td>';
+                    ourClass += '</tr></table>';
+                    infowindow.setContent(ourClass);
+					drawGauge(rssi);
+                }
+            };
+
+
+			var jObj;
+		    jObj = {cmd:"DEVINFO"};
+		    jObj['mac'] = "80:7D:3A:A2:9C:08";
+		   
+		    var jStr = JSON.stringify(jObj);
+		    var urlStr = "http://dsc-iot.ucsd.edu/api_ian/sampleAPI.py";
+		    xmlhttp.open("POST", urlStr, true);
+		    xmlhttp.setRequestHeader('Content-Type', 'application/json');
+		    xmlhttp.send(jStr);
+        }
+        
+        function drawGauge(rssi) {
+
+            var dataRSSI = google.visualization.arrayToDataTable([
+              ['Label', 'Value'],
+              ['RSSI dB', 0],
+            ]);
+
+            var optionsR = {
+              width: 160, height: 120,
+              redFrom: -99, redTo: -90,
+              yellowFrom:-89, yellowTo: -75,
+              greenFrom: -74, greenTo: 0,
+              minorTicks: 5,
+              max: 0,
+              min: -100
+            };
+
+            var RSSIchart = new google.visualization.Gauge(document.getElementById('RSSIchart_div'));
+            dataRSSI.setValue(0, 1, rssi);
+            RSSIchart.draw(dataRSSI, optionsR);
+        }
+
+      }
+      
+    </script>
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBRQQ4iVEx6ijcbOgwtc7Y95i7tMdlqtvw&callback=initMap">
+    </script>
+  </body>
+</html>
+

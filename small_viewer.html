@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+
+<html>
+    <head profile="http://www.w3.org/2005/10/profile">
+        
+        <title>CSE191 Data Viewer</title>
+        <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+        
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+
+        <link rel="stylesheet" type="text/css" href="tables.css">
+
+        <style>
+        html,body,h1,h2,h3,h4,h5 {font-family: "Open Sans", sans-serif}
+        
+        .smalltableList {
+            font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+            font-size: 8px;
+            border-collapse: collapse;
+            width: 400px;
+        }
+
+        .smalltableList td, .smalltableList th {
+            border: 1px solid #ddd;
+            padding: 2px;
+            text-align: left;
+        }
+
+        .smalltableList tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        .smalltableList th {
+            padding-top: 2px;
+            padding-bottom: 2px;
+            text-align: left;
+            background-color: #0099cc;
+            color: white;
+        }
+
+        .smalltableList tr:hover {
+            background-color: #ddd;
+        }
+
+
+        .smalltableList .noHover:hover {
+            background-color: #f2f2f2;
+        }
+
+        .centered {
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          border-style: solid;
+          border-width: 2px;
+          padding: 4px;
+          background-color: white;
+        }
+        </style>
+
+    </head>
+
+<body class="w3-theme-l5">
+    
+    <div class="w3-container w3-card w3-white w3-round w3-margin-right w3-margin-left"><br>
+        <div class="w3-row-padding" style="margin:0 -16px">
+            
+            <table class="smalltableList" id="groupsTable">
+                <thead>
+                    <tr>
+                        <th>Group ID </th>
+                        <th>Group Name </th>
+                        <th>Students </th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>    
+            <br>
+        </div>
+    </div>
+    <div id="count_graph_div" class="centered"></div>
+    <br>
+    <span id="debugStr"></span>
+
+<script>
+    
+google.charts.load('current', {'packages':['line']});
+//      google.charts.setOnLoadCallback(drawChart);
+
+var grpTimer;
+
+var gTable = document.getElementById('groupsTable'); 
+
+// now continuously get server updates
+grpTimer = setInterval(updateGroups, 5000);    // 5 seconds
+
+// get activity update
+updateGroups();
+
+//============== UPDATE Students TABLE =================
+function clearGroups() {
+
+    // clear all except first row
+    var x = gTable.rows.length;
+    for (var i=x-1; i>0; i--)
+        gTable.deleteRow(i);
+    
+}
+
+function refreshGroups(s) {
+
+    var row = gTable.insertRow();
+
+    row.setAttribute("onclick","drawCount("+s.groupID+")"); 
+
+    var cellGID = row.insertCell(0);
+    var cellGName = row.insertCell(1);
+    var cellName = row.insertCell(2);
+
+    // fill cells:
+    cellGName.innerHTML = s.groupName;
+    cellGID.innerHTML = s.groupID;
+    cellName.innerHTML = s.Student_1;
+    if (s.Student_2!=" ")
+        cellName.innerHTML +=" & "+s.Student_2;
+ 
+}
+
+// load the status of all table entries
+function updateGroups() {
+
+    var xmlhttp = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            var statsObj = JSON.parse(this.responseText);
+            clearGroups();
+            // got data
+            // lets loop thru and fill in the data
+            statsObj.groups.forEach(refreshGroups); 
+        }
+    };
+
+    var jObj;
+
+    jObj = {cmd:"GROUPS"};
+   
+    var jStr = JSON.stringify(jObj);
+
+    var urlStr = "http://dsc-iot.ucsd.edu/api_ian/sampleAPI.py";
+    xmlhttp.open("POST", urlStr, true);
+    xmlhttp.setRequestHeader('Content-Type', 'application/json');
+    xmlhttp.send(jStr);
+}
+
+
+function debugStr(str) {
+    var x = document.getElementById("debugStr");
+    x.innerHTML = str;
+}
+
+
+function drawCount(gid) {
+    // for now make up data
+    dObj = {"data":[
+                {"timestamp":"2020-05-04", "count":"90"},
+                {"timestamp":"2020-05-05", "count":"92"},
+                {"timestamp":"2020-05-06", "count":"98"},
+                {"timestamp":"2020-05-07", "count":"89"},
+                {"timestamp":"2020-05-08", "count":"87"},
+                {"timestamp":"2020-05-09", "count":"99"},
+                {"timestamp":"2020-05-10", "count":"105"}
+                ]};
+
+    drawGraphs(dObj);
+}
+
+function drawGraphs(lObj) {
+
+    var dataGraph = new google.visualization.DataTable();
+
+    dataGraph.addColumn('datetime', 'Time');
+    dataGraph.addColumn('number', 'Count');
+
+    lObj.data.forEach(function updateGraph(l) {
+        //console.log("Adding:",l.timestamp,l.temp,l.hum);
+        dataGraph.addRow(
+                [new Date(l.timestamp), parseInt(l.count) ]
+        );
+    });
+
+    var options = {
+        titleTextStyle: { bold: true },
+        chart: {
+            title: 'BLE Traffic Data for last 7 days',
+            subtitle: 'as of: '+lObj.data[0].timestamp,
+        },
+        series: {
+            // Gives each series an axis name that matches the Y-axis below.
+            0: {
+                axis: 'Count', 
+                color:'red',
+            },
+        },
+        axes: {
+        // Adds labels to each axis; they don't have to match the axis names.
+            y: {
+                Count: {
+                    label: 'Count', 
+                },
+            },
+            x: {
+                0: {
+                    label: '',
+                }
+            }
+        },
+        vAxes:{
+            Count: {
+                 textStyle: { color: 'red' },
+                 titleTextStyle: { color: 'red' },
+            },
+        },
+        hAxis:{
+                 textPosition: 'none',
+        },
+        legend: { position: 'none' },
+        curveType: 'function',
+        width: 340,
+        height: 200,
+    };
+
+    var graph = new google.charts.Line(document.getElementById('count_graph_div'));
+
+    graph.draw(dataGraph, google.charts.Line.convertOptions(options));
+}
+
+</script>
+
+</body>
+</html> 
