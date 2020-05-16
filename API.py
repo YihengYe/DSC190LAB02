@@ -138,6 +138,43 @@ def get_log(params, cursor, is_get):
     
     beacons = params['beacons']
 
+    if is_get:
+        gid = params['gid'].value
+        blemac = i['mac'].value
+        devmac = params['devmac'].value
+        blerssi = i['rssi'].value
+    else:
+        gid = params['gid']
+        blemac = i['mac']
+        devmac = params['devmac']
+        blerssi = i['rssi']
+
+    check = "SELECT * FROM iotdb.devices WHERE iotdb.devices.mac = {0} \
+             AND iotdb.devices.groupID = {1}".format(devmac, gid)
+    data = execute_sql(check, cursor)
+
+    # if the device is not registered, insert the new
+    if len(data) < 1:
+        dev_update = "INSERT INTO iotdb.devices(mac, groupID, lastseen) \
+                    VALUES('{0}', '{1}', '{2}')".format(devmac, 
+                    gid, 
+                    time)
+    # if an existing device, update the origin
+    else:
+        dev_update="UPDATE iotdb.devices\
+        SET lastseen='{0}' \
+        WHERE mac='{1}' AND groupID='{2}'".format(time, devmac, gid)
+
+
+    try:
+        cursor.execute(dev_update)
+        connection.commit()
+
+    except Exception as err:
+        print(err)
+
+
+    # log into blelogs
     for i in beacons:
         if is_get:
             gid = params['gid'].value
@@ -149,35 +186,12 @@ def get_log(params, cursor, is_get):
             blemac = i['mac']
             devmac = params['devmac']
             blerssi = i['rssi']
-        dev_update="UPDATE iotdb.devices\
-            SET lastseen='{0}' \
-            WHERE mac='{1}' AND groupID='{2}'".format(time, devmac, gid)
-        try:
-            cursor.execute(dev_update)
-            connection.commit()
-        except Exception as err:
-            print(err)
+
         sql = "INSERT INTO iotdb.blelogs(gid, devmac, blemac, blerssi, timestamp) \
             VALUES('{0}', '{1}', '{2}', '{3}','{4}')".format(gid, devmac, blemac, blerssi, time)
-        query = "SELECT * FROM iotdb.devices WHERE iotdb.devices.mac = '%s'" % blemac
-        data = execute_sql(query, cursor)
-        # if the device is not registered, insert the new
-        if len(data) < 1:
-            divi_sql = "INSERT INTO iotdb.devices(mac, groupID, lastseen) \
-                        VALUES('{0}', '{1}', '{2}')".format(blemac, 
-                        gid, 
-                        time)
-        # if an existing device, update the origin
-        else:
-            divi_sql="UPDATE iotdb.devices \
-                SET groupID='{0}', lastseen='{1}'\
-                WHERE mac='{2}'".format(gid,
-                time,
-                blemac) 
+
         try:
             execute_sql(sql, cursor)
-            connection.commit()
-            execute_sql(divi_sql, cursor)
             connection.commit()
 
             status='successed'
