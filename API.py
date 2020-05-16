@@ -134,21 +134,16 @@ def get_reg(params, cursor, is_get):
 
 
 def get_log(params, cursor, is_get):
-
-    
-    beacons = params['beacons']
-
     if is_get:
         gid = params['gid'].value
         devmac = params['devmac'].value
     else:
         gid = params['gid']
         devmac = params['devmac']
-
-    check = "SELECT * FROM iotdb.devices WHERE iotdb.devices.mac = {0} \
-             AND iotdb.devices.groupID = {1}".format(devmac, gid)
+    
+    check = "SELECT * FROM iotdb.devices WHERE iotdb.devices.mac = '{0}' \
+             AND iotdb.devices.groupID = '{1}'".format(devmac, gid)
     data = execute_sql(check, cursor)
-
     # if the device is not registered, insert the new
     if len(data) < 1:
         dev_update = "INSERT INTO iotdb.devices(mac, groupID, lastseen) \
@@ -169,7 +164,7 @@ def get_log(params, cursor, is_get):
     except Exception as err:
         print(err)
 
-
+    beacons = params['beacons']
     # log into blelogs
     for i in beacons:
         if is_get:
