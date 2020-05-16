@@ -140,14 +140,10 @@ def get_log(params, cursor, is_get):
 
     if is_get:
         gid = params['gid'].value
-        blemac = i['mac'].value
         devmac = params['devmac'].value
-        blerssi = i['rssi'].value
     else:
         gid = params['gid']
-        blemac = i['mac']
         devmac = params['devmac']
-        blerssi = i['rssi']
 
     check = "SELECT * FROM iotdb.devices WHERE iotdb.devices.mac = {0} \
              AND iotdb.devices.groupID = {1}".format(devmac, gid)
