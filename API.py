@@ -137,24 +137,27 @@ def get_log(params, cursor, is_get):
     if is_get:
         gid = params['gid'].value
         devmac = params['devmac'].value
+        ip=params['ip'].value
     else:
         gid = params['gid']
         devmac = params['devmac']
+        ip=params['ip']
     
     check = "SELECT * FROM iotdb.devices WHERE iotdb.devices.mac = '{0}' \
              AND iotdb.devices.groupID = '{1}'".format(devmac, gid)
     data = execute_sql(check, cursor)
     # if the device is not registered, insert the new
     if len(data) < 1:
-        dev_update = "INSERT INTO iotdb.devices(mac, groupID, lastseen) \
-                    VALUES('{0}', '{1}', '{2}')".format(devmac, 
+        dev_update = "INSERT INTO iotdb.devices(mac, groupID, lastseen, ip) \
+                    VALUES('{0}', '{1}', '{2}', '{3}')".format(devmac, 
                     gid, 
-                    time)
+                    time,
+                    ip)
     # if an existing device, update the origin
     else:
         dev_update="UPDATE iotdb.devices\
-        SET lastseen='{0}' \
-        WHERE mac='{1}' AND groupID='{2}'".format(time, devmac, gid)
+        SET lastseen='{0}' AND ip='{1}'\
+        WHERE mac='{2}' AND groupID='{3}'".format(time, ip, devmac, gid)
 
 
     try:
