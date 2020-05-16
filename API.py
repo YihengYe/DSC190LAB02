@@ -156,14 +156,14 @@ def get_log(params, cursor, is_get):
     # if an existing device, update the origin
     else:
         dev_update="UPDATE iotdb.devices\
-        SET lastseen='{0}' AND ip='{1}'\
+        SET lastseen='{0}',ip='{1}'\
         WHERE mac='{2}' AND groupID='{3}'".format(time, ip, devmac, gid)
         # check null value
         checker=data[0]
         checker_ip=checker['ip']
         if checker_ip==None:
             dev_update="UPDATE iotdb.devices\
-                SET lastseen='{0}' AND ip='{1}'\
+                SET lastseen='{0}',ip='{1}'\
                 WHERE mac='{2}' AND groupID='{3}' AND ip is null".format(time, ip, devmac, gid)
 
 
