@@ -228,23 +228,12 @@ def post_logdev(params, cursor, is_get):
     assert is_get == False, 'LOGDEV not supported for GET'
 
     mac = params['mac']
-    query = "SELECT * FROM iotdb.devlogs WHERE iotdb.devlogs.mac = '%s'" % mac
-    data = execute_sql(query, cursor)
-    # if the device is not registered, insert the new
-    if len(data) < 1:
-        divi_sql = "INSERT INTO iotdb.devlogs(mac, groupID, RSSI, lastseen) \
-                    VALUES('{0}', '{1}', '{2}', '{3}')".format(mac, 
-                    params['gid'], 
-                    params['RSSI'],
-                    time)
-    # if an existing device, update the origin
-    else:
-        divi_sql="UPDATE iotdb.devlogs \
-            SET RSSI='{0}', groupID='{1}', lastseen='{2}'\
-            WHERE mac='{3}'".format(params['RSSI'],
-             params['gid'], 
-             time,
-             mac) 
+   
+    divi_sql = "INSERT INTO iotdb.devlogs(mac, groupID, RSSI, lastseen) \
+                VALUES('{0}', '{1}', '{2}', '{3}')".format(mac, 
+                params['gid'], 
+                params['RSSI'],
+                time)
     try:
         execute_sql(divi_sql, cursor)
         connection.commit()
