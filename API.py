@@ -158,6 +158,13 @@ def get_log(params, cursor, is_get):
         dev_update="UPDATE iotdb.devices\
         SET lastseen='{0}' AND ip='{1}'\
         WHERE mac='{2}' AND groupID='{3}'".format(time, ip, devmac, gid)
+        # check null value
+        checker=data[0]
+        checker_ip=checker['ip']
+        if checker_ip==None:
+            dev_update="UPDATE iotdb.devices\
+                SET lastseen='{0}' AND ip='{1}'\
+                WHERE mac='{2}' AND groupID='{3}' AND ip is null".format(time, ip, devmac, gid)
 
 
     try:
@@ -166,6 +173,7 @@ def get_log(params, cursor, is_get):
 
     except Exception as err:
         print(err)
+        print(dev_update)
 
     beacons = params['beacons']
     # log into blelogs
