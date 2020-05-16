@@ -27,11 +27,11 @@ def process_db():
 	ok='OK'
 	warning='WARNING'
 	print(now.strftime("%Y-%m-%d %H:%M:%S")," I'm checking for timeout")
-	sql='SELECT DISTINCT blemac FROM iotdb.blelogs WHERE gid=3'
+	sql='SELECT DISTINCT mac FROM iotdb.devices WHERE groupID=3'
 	cursor.execute(sql)
 	devs=cursor.fetchall()
 	for dev in devs:
-		mac=dev['blemac']
+		mac=dev['mac']
 		sql_timeout="UPDATE iotdb.devices SET status='{0}'\
 			 WHERE now()> DATE_ADD(lastseen, INTERVAL 30 SECOND) AND mac='{1}' AND groupID=3 ".format(timeout, mac)
 		sql_error=sql_timeout="UPDATE iotdb.devices SET status='{0}'\
@@ -43,7 +43,7 @@ def process_db():
 		st=st1['status']
 		if st==timeout or st==error:
 			sql3="SELECT * FROM iotdb.blelogs WHERE gid=3 AND now()< DATE_ADD(timestamp, INTERVAL 15 SECOND)\
-				AND blemac='{0}'".format(mac)
+				AND devmac='{0}'".format(mac)
 			cursor.execute(sql3)
 			data=cursor.fetchall()
 			if len(data)>=1:
@@ -61,7 +61,7 @@ def process_db():
 
 		elif st==warning:
 			sql4="SELECT * FROM iotdb.blelogs WHERE gid=3 AND now()< DATE_ADD(timestamp, INTERVAL 30 SECOND)\
-				AND blemac='{0}'".format(mac)
+				AND devmac='{0}'".format(mac)
 			cursor.execute(sql4)
 			data=cursor.fetchall()
 			if len(data)>=3:
