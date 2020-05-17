@@ -44,7 +44,7 @@ def process_db():
 		cursor.execute(sql_warning)
 		connection.commit()
 		cursor.execute(sql_timeout)
-		cursor.commit()
+		connection.commit()
 		
 
 
