@@ -64,6 +64,26 @@ def get_list(params, cursor, is_get):
     
     display_data(data, 'devices')
 
+def get_devlist(params, cursor, is_get):
+    try:
+        if is_get:
+            gid = params['gid'].value
+        else:
+            gid = params['gid']
+    except:
+        gid = None
+    
+    if (not gid):
+        sql = "SELECT * FROM iotdb.devlogs"
+    else:
+        sql = "SELECT * FROM iotdb.devlogs WHERE groupID=%s" % gid
+
+    data = execute_sql(sql, cursor)
+    for item in data:
+       item['lastseen'] = str(item['lastseen'])
+    
+    display_data(data, 'devlogs')
+
 def get_blelist(params, cursor, is_get):
     try:
         if is_get:
@@ -321,6 +341,8 @@ def main():
         post_logdev(params, cursor, GET)
     if cmd_line =='BLELIST':
         get_blelist(params, cursor, GET)
+    if cmd_line =='DEVLIST':
+        get_devlist(params, cursor, GET)
 
 
   #   if GET:
