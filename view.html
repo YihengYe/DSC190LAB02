@@ -18,8 +18,18 @@
 
     </head>
 
-<body class="w3-theme-l5">
-    
+<body class="w3-theme-l5" bgcolor=WHITE>
+    <!-- <div>
+        <h1><center>DSC190-B - Software Engineering for IoT Applications</center>
+        </h1>
+        <hr>
+
+        <center>
+        <h2>This is Group number 03, whose name is DSC190 group 3</h2></td>
+        <h2>Yifei Ning and Yiheng Ye</h2></td>
+        </center>
+    </div> -->
+
     <div class="w3-container w3-card w3-white w3-round w3-margin-right w3-margin-left"><br>
 
         <span class="w3-right w3-opacity">5 Sec</span>
@@ -38,11 +48,38 @@
                 <tbody>
                 </tbody>
             </table>    
+
+
+            <table class="tableList" id="devicesTable">
+                <thead>
+                    <tr>
+                        <th>lastseen</th>
+                        <th>device mac </th>
+                        <th>status </th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>    
+
+
+            <table class="tableList" id="blelogsTable">
+                <thead>
+                    <tr>
+                        <th>timestamp</th>
+                        <th>devmac </th>
+                        <th>blemac </th>
+                        <th>blerssi </th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>    
             <br>
         </div>
     </div>
 
-	<br>
+    <br>
     <span id="debugStr"></span>
 
 <script>
@@ -51,13 +88,20 @@ var grpTimer;
 
 var gTable = document.getElementById('groupsTable'); 
 
-var count=0;
+var devicesTable = document.getElementById('devicesTable'); 
+
+
+var blelogsTable = document.getElementById('blelogsTable'); 
+
+var count = 0;
 
 // now continuously get server updates
 grpTimer = setInterval(updateGroups, 5000);    // 5 seconds
 
 // get activity update
-updateGroups();
+// updateGroups('GROUPS', 'groups');
+updateGroups('list', 'devices');
+updateGroups('blelist', 'blelogs');
 
 //============== UPDATE Students TABLE =================
 function clearGroups() {
@@ -82,33 +126,76 @@ function refreshGroups(s) {
     cellGID.innerHTML = s.groupID;
     cellName.innerHTML = s.Student_1;
     if (s.Student_2!=" ")
-    	cellName.innerHTML +=" & "+s.Student_2;
- 
+        cellName.innerHTML +=" & "+s.Student_2;
+
 }
 
+function refreshDevices(s) {
+    var row = devicesTable.insertRow();
+
+    var cellLastseen = row.insertCell(0);
+    var cellMac = row.insertCell(1);
+    var cellStatus = row.insertCell(2);
+
+    // fill cells:
+    cellLastseen.innerHTML = s.lastseen;
+    cellMac.innerHTML = s.mac;
+    cellStatus.innerHTML = s.status;
+}
+
+
+function refreshBlelogs(s) {
+    var row = blelogsTable.insertRow();
+
+    var cellTime = row.insertCell(0);
+    var cellDMac = row.insertCell(1);
+    var cellBMac = row.insertCell(2);
+    var cellRssi = row.insertCell(3);
+    // fill cells:
+    cellTime.innerHTML = s.timestamp;
+    cellDMac.innerHTML = s.devmac;
+    cellBMac.innerHTML = s.blemac;
+    cellRssi.innerHTML = s.blerssi;
+}
+
+
 // load the status of all table entries
-function updateGroups() {
+function updateGroups(cmd_line, types) {
+
 
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function() {
         if (this.readyState == 4 && this.status == 200) {
+
+            // console.log(this.responseText.replaceAll('None', 'null'));
+
             var statsObj = JSON.parse(this.responseText);
             clearGroups();
             // got data
             // lets loop thru and fill in the data
-            statsObj.groups.forEach(refreshGroups); 
+
+            if (types == 'groups') {
+                 statsObj.groups.forEach(refreshGroups); 
+            }
+            
+            if (types == 'devices') {
+                 statsObj.devices.forEach(refreshDevices); 
+            }
+            
+            if (types == 'blelogs') {
+                 statsObj.blelogs.forEach(refreshBlelogs); 
+            }
+                
         }
     };
 
-	var jObj;
-
-    jObj = {cmd:"GROUPS"};
+    var jObj = {"cmd": cmd_line, 'gid': '3'};
    
     var jStr = JSON.stringify(jObj);
 
-    //debugStr(jStr);
+    debugStr(jStr);
     
-    var urlStr = "http://dsc-iot.ucsd.edu/gid03/API.py";
+    var urlStr = "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py";
     xmlhttp.open("POST", urlStr, true);
     xmlhttp.setRequestHeader('Content-Type', 'application/json');
     xmlhttp.send(jStr);
