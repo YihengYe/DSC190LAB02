@@ -86,13 +86,13 @@ def get_blelist(params, cursor, is_get):
 def get_devlist(params, cursor, is_get):
     try:
         if is_get:
-            gid = params['gid'].value
+            # gid = params['gid'].value
             devmac = params['mac'].value
         else:
-            gid = params['gid']
+            # gid = params['gid']
             devmac = params['mac']
     except:
-        gid = None
+        devmac = None
     if (not gid): # blelog_id
         sql = "SELECT * FROM iotdb.devlogs"
     else:
