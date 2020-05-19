@@ -107,26 +107,26 @@
       // place marker by devices
       function placeMarker() {
         var xmlhttp = new XMLHttpRequest();
-        xmlhttp.onreadystatechange = function () {
+        xmlhttp.onload = function () {
           if (this.readyState == 4 && this.status == 200) {
+            console.log(this.responseText);
             var statsObj = JSON.parse(this.responseText);
             statsObj.devices.forEach(fillingInfo);
           }
         };
 
-        var cmdObj = { cmd: "LIST" };
+        var cmdObj = {"cmd": "LIST" };
         var cmdStr = JSON.stringify(cmdObj);
-        xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/API.py", true);
+        xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
         xmlhttp.setRequestHeader('Content-Type', 'application/json');
         xmlhttp.send(cmdStr);
-
       };
 
       // format and digest DevInfo from back-end
       function fillingInfo(device) {
         var gid = device.groupID;
         var devmac = device.mac;
-        var status = devices.status;
+        var status = device.status;
         var lon = device.dev_long;
         var lat = device.dev_lat;
 
@@ -142,10 +142,6 @@
 
         else if (status == 'TIMEOUT') {
           iconColor = 'yellow';
-        }
-
-        else {
-          iconColor = 'black';
         }
 
 
@@ -203,9 +199,9 @@
           }
         };
 
-        var cmdObj = { cmd: "DEVLIST", mac: devmac};
+        var cmdObj = {"cmd": "DEVLIST", "mac": devmac};
         var cmdStr = JSON.stringify(cmdObj);
-        xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/API.py", true);
+        xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
         xmlhttp.setRequestHeader('Content-Type', 'application/json');
         xmlhttp.send(cmdStr);
       };
@@ -235,9 +231,10 @@
           }
         };
 
-        var cmdObj = { cmd: "BLELIST", devmac: devmac};
+        var cmdObj;
+        cmdObj = {"cmd": "BLELIST", "devmac": devmac};
         var cmdStr = JSON.stringify(cmdObj);
-        xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/API.py", true);
+        xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
         xmlhttp.setRequestHeader('Content-Type', 'application/json');
         xmlhttp.send(cmdStr);
 
