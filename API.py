@@ -7,7 +7,7 @@ import requests
 from flask import Flask, request
 from datetime import date
 from datetime import datetime
-
+import time as tts
 #import cgitb
 import cgi, cgitb
 #cgitb.enable()
@@ -63,6 +63,26 @@ def get_list(params, cursor, is_get):
     
     display_data(data, 'devices')
 
+def get_devlist(params, cursor, is_get):
+    try:
+        if is_get:
+            gid = params['gid'].value
+        else:
+            gid = params['gid']
+    except:
+        gid = None
+    
+    if (not gid):
+        sql = "SELECT * FROM iotdb.devlogs"
+    else:
+        sql = "SELECT * FROM iotdb.devlogs WHERE groupID=%s" % gid
+
+    data = execute_sql(sql, cursor)
+    for item in data:
+       item['lastseen'] = str(item['lastseen'])
+    
+    display_data(data, 'devlogs')
+
 def get_blelist(params, cursor, is_get):
     try:
         if is_get:
@@ -82,28 +102,6 @@ def get_blelist(params, cursor, is_get):
        item['timestamp'] = str(item['timestamp'])
     
     display_data(data, 'blelogs')
-
-def get_devlist(params, cursor, is_get):
-    try:
-        if is_get:
-            # gid = params['gid'].value
-            devmac = params['mac'].value
-        else:
-            # gid = params['gid']
-            devmac = params['mac']
-    except:
-        devmac = None
-    if (not gid): # blelog_id
-        sql = "SELECT * FROM iotdb.devlogs"
-    else:
-        sql = "SELECT * FROM iotdb.devlogs WHERE mac='{0}'".format(devmac)
-
-    data = execute_sql(sql, cursor)
-    for item in data:
-       item['timestamp'] = str(item['timestamp'])
-    
-    display_data(data, 'devlogs')
-
 
 
 def get_groups(params, cursor, is_get):
@@ -219,9 +217,10 @@ def get_log(params, cursor, is_get):
             blemac = i['mac']
             devmac = params['devmac']
             blerssi = i['rssi']
+        rntime=get_global_time()
 
         sql = "INSERT INTO iotdb.blelogs(gid, devmac, blemac, blerssi, timestamp) \
-            VALUES('{0}', '{1}', '{2}', '{3}','{4}')".format(gid, devmac, blemac, blerssi, time)
+            VALUES('{0}', '{1}', '{2}', '{3}','{4}')".format(gid, devmac, blemac, blerssi, rntime)
 
         try:
             execute_sql(sql, cursor)
@@ -233,6 +232,7 @@ def get_log(params, cursor, is_get):
             status="failed"
 
         format_result(['timestamp', 'status'], [time, status])
+        tts.sleep(0.5)
 
 
 # def post_reg(params, cursor):
@@ -338,11 +338,9 @@ def main():
 
     if cmd_line == 'LOGDEV':
         post_logdev(params, cursor, GET)
-
     if cmd_line =='BLELIST':
-        get_blelist
-
-    if cmd_line == "DEVLIST":
+        get_blelist(params, cursor, GET)
+    if cmd_line =='DEVLIST':
         get_devlist(params, cursor, GET)
 
 
