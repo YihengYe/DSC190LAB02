@@ -72,10 +72,23 @@ def get_devlist(params, cursor, is_get):
     except:
         gid = None
     
-    if (not gid):
+    try:
+        if is_get:
+            mac = params['devmac'].value
+        else:
+            mac = params['devmac']
+    except:
+        mac = None
+    
+    if (not gid) and (not mac):
         sql = "SELECT * FROM iotdb.devlogs"
-    else:
+    elif (not mac):
         sql = "SELECT * FROM iotdb.devlogs WHERE groupID=%s" % gid
+    elif (not gid):
+        sql = "SELECT * FROM idtdb.devlogs WHERE mac='{0}'".format(mac)
+    else:
+        sql ="SELECT * FROM idtdb.devlogs WHERE mac='{0}' and groupID='{1}'".format(mac, gid)
+        
 
     data = execute_sql(sql, cursor)
     for item in data:
