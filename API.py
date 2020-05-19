@@ -74,14 +74,14 @@ def get_devlist(params, cursor, is_get):
     
     try:
         if is_get:
-            mac = params['devmac'].value
+            mac = params['mac'].value
         else:
-            mac = params['devmac']
+            mac = params['mac']
     except:
         mac = None
     
     if (not gid) and (not mac):
-        sql = "SELECT * FROM iotdb.devlogs"
+        sql = "SELECT * FROM iotdb.devlogs LIMIT 5"
     elif (not mac):
         sql = "SELECT * FROM iotdb.devlogs WHERE groupID=%s" % gid
     elif (not gid):
