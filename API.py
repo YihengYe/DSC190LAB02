@@ -7,6 +7,7 @@ import requests
 from flask import Flask, request
 from datetime import date
 from datetime import datetime
+import time as tts
 
 #import cgitb
 import cgi, cgitb
@@ -211,6 +212,7 @@ def get_log(params, cursor, is_get):
             status="failed"
 
         format_result(['timestamp', 'status'], [time, status])
+        tts.sleep(0.2)
 
 
 # def post_reg(params, cursor):
