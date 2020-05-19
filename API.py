@@ -105,10 +105,23 @@ def get_blelist(params, cursor, is_get):
     except:
         gid = None
     
-    if (not gid): # blelog_id
-        sql = "SELECT * FROM iotdb.blelogs ORDER BY blelog_id  DESC LIMIT 10"
+    try:
+        if is_get:
+            mac = params['devmac'].value
+        else:
+            mac = params['devmac']
+    except:
+        mac = None
+    
+    if (not gid) and (not mac): # blelog_id
+        sql = "SELECT * FROM iotdb.blelogs ORDER BY blelog_id  DESC LIMIT 5"
+    elif (not mac):
+        sql = "SELECT * FROM iotdb.blelogs WHERE gid='{0}' ORDER BY blelog_id DESC LIMIT 5".format(gid)
+    elif (not gid):
+        sql = "SELECT * FROM iotdb.blelogs WHERE devmac='{0}' ORDER BY blelog_id DESC LIMIT 5".format(mac)
     else:
-        sql = "SELECT * FROM iotdb.blelogs WHERE gid='{0}' ORDER BY blelog_id DESC LIMIT 10".format(gid)
+        sql = "SELECT * FROM iotdb.blelogs WHERE devmac='{0}' AND gid='{1}' ORDER BY blelog_id DESC LIMIT 5".format(mac, gid)
+
 
     data = execute_sql(sql, cursor)
     for item in data:
