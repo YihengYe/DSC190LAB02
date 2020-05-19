@@ -212,7 +212,7 @@ def get_log(params, cursor, is_get):
             status="failed"
 
         format_result(['timestamp', 'status'], [time, status])
-        tts.sleep(0.2)
+        tts.sleep(0.5)
 
 
 # def post_reg(params, cursor):
