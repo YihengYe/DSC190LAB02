@@ -198,9 +198,10 @@ def get_log(params, cursor, is_get):
             blemac = i['mac']
             devmac = params['devmac']
             blerssi = i['rssi']
+        rntime=get_global_time()
 
         sql = "INSERT INTO iotdb.blelogs(gid, devmac, blemac, blerssi, timestamp) \
-            VALUES('{0}', '{1}', '{2}', '{3}','{4}')".format(gid, devmac, blemac, blerssi, time)
+            VALUES('{0}', '{1}', '{2}', '{3}','{4}')".format(gid, devmac, blemac, blerssi, rntime)
 
         try:
             execute_sql(sql, cursor)
