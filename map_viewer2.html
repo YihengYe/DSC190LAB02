@@ -1,165 +1,277 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>DSC190 Map Viewer</title>
-    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <meta name="viewport" content="initial-scale=1.0">
-    <meta charset="utf-8">
-    <style>
-      /* Always set the map height explicitly to define the size of the div
+
+<head>
+  <title>DSC190 Map Viewer</title>
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <meta name="viewport" content="initial-scale=1.0">
+  <meta charset="utf-8">
+  <style>
+    /* Always set the map height explicitly to define the size of the div
        * element that contains the map. */
-      #map {
-        height: 100%;
-      }
-      /* Optional: Makes the sample page fill the window. */
-      html, body {
-        height: 100%;
-        margin: 0;
-        padding: 0;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="map"></div>
+    #map {
+      height: 100%;
+    }
 
-    <script>
+    /* Optional: Makes the sample page fill the window. */
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+</head>
 
-      // init charts
-    google.charts.load('current', {'packages':['gauge']});
-//      google.charts.setOnLoadCallback(drawGauges);
+<body>
+  <div id="map"></div>
+
+  <script>
+
+    // init charts
+    google.charts.load('current', { 'packages': ['gauge'] });
+    //      google.charts.setOnLoadCallback(drawGauges);
 
 
-      function initMap() {
-        
-        var ourClass = "null";
+    function initMap() {
 
-        var infowindow = new google.maps.InfoWindow({
-          content: ourClass,
-          maxWidth: 300
-        });
-        
-//        var exLink = '<iframe width=1000 height=600 src="http://cse191iot.ucsd.edu/ian/sample_viewer.html"></iframe>';
-        var exLink = '<iframe width=400 height=400 src="http://dsc-iot.ucsd.edu/gid03/view.html"></iframe>';
 
-        var exinfowindow = new google.maps.InfoWindow({
-          content: exLink,
-          maxWidth: 1000,
-          maxHeight: 600
-        });
-        
-        var ourClassLoc = {lat: 32.881928, lng: -117.233652};
 
-        var map = new google.maps.Map(document.getElementById('map'), {
-          zoom: 15,
-          center: ourClassLoc,
-          title: 'UCSD CSE191'
-        });
+      var ourClass = "null";
 
-        var ourClassMarker = new google.maps.Marker({
-          position: ourClassLoc,
-//          content: ourClass,
+      var infowindow = new google.maps.InfoWindow({
+        content: ourClass,
+        maxWidth: 300
+      });
+
+      //        var exLink = '<iframe width=1000 height=600 src="http://cse191iot.ucsd.edu/ian/sample_viewer.html"></iframe>';
+      var exLink = '<iframe width=400 height=400 src="http://dsc-iot.ucsd.edu/gid03/view.html"></iframe>';
+
+      var exinfowindow = new google.maps.InfoWindow({
+        content: exLink,
+        maxWidth: 1000,
+        maxHeight: 600
+      });
+
+      var YihengPosition = { lat: 32.881928, lng: -117.233652 };
+      var YifeiPosition = { lat: 32.882988, lng: -117.233692 };
+
+
+      var map = new google.maps.Map(document.getElementById('map'), {
+        zoom: 15,
+        center: YihengPosition,
+        title: 'UCSD CSE191'
+      });
+      placeMarker();
+      // var YihengMarker = new google.maps.Marker({
+      //   position: YihengPosition,
+      //   //          content: ourClass,
+      //   map: map,
+      //   title: 'Jason\'s Coffee Shop'
+      // });
+
+      // var YifeiMarker = new google.maps.Marker({
+      //   position: YifeiPosition,
+      //   //          content: exampleLink,
+      //   map: map,
+      //   title: 'Our Example'
+      // });
+
+      // zoom if clicked example
+      // YihengMarker.addListener('click', function () {
+      //   map.setZoom(18);
+      //   map.setCenter(YihengMarker.getPosition());
+      // });
+
+      // // display info on mouseover
+      // YihengMarker.addListener('mouseover', function () {
+      //   // do a popup with current info
+      //   infowindow.open(map, YihengMarker);
+      //   updateDevices();
+      // });
+
+      // // hide info if move moved away
+      // YihengMarker.addListener('mouseout', function () {
+      //   // remove popup 
+      //   infowindow.close();
+      // });
+
+      // // display info on mouseover
+      // YifeiMarker.addListener('click', function () {
+      //   // do a popup with current info
+      //   exinfowindow.open(map, YifeiMarker);
+      //   updateDevices();
+      // });
+
+
+      // place marker by devices
+      function placeMarker() {
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function () {
+          if (this.readyState == 4 && this.status == 200) {
+            var statsObj = JSON.parse(this.responseText);
+            statsObj.devices.forEach(fillingInfo);
+          }
+        };
+
+        var cmdObj = { cmd: "LIST" };
+        var cmdStr = JSON.stringify(cmdObj);
+        xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/API.py", true);
+        xmlhttp.setRequestHeader('Content-Type', 'application/json');
+        xmlhttp.send(cmdStr);
+
+      };
+
+      // format and digest DevInfo from back-end
+      function fillingInfo(device) {
+        var gid = device.groupID;
+        var devmac = device.mac;
+        var status = devices.status;
+        var lon = device.dev_long;
+        var lat = device.dev_lat;
+
+
+        var iconColor;
+        if (status == 'OK') {
+          iconColor = 'green';
+        }
+
+        else if (status == 'ERROR') {
+          iconColor = 'red';
+        }
+
+        else if (status == 'TIMEOUT') {
+          iconColor = 'yellow';
+        }
+
+        else {
+          iconColor = 'black';
+        }
+
+
+        let marker = new google.maps.Marker({
           map: map,
-          title: 'Jason\'s Coffee Shop'
-        });
-        
-        var exampleLoc = {lat: 32.882988, lng: -117.233692};
-        var exampleMarker = new google.maps.Marker({
-          position: exampleLoc,
-//          content: exampleLink,
-          map: map,
-          title: 'Our Example'
-        });
-        
-        // zoom if clicked example
-        ourClassMarker.addListener('click', function() {
-          map.setZoom(18);
-          map.setCenter(ourClassMarker.getPosition());
-        });
-        
-        // display info on mouseover
-        ourClassMarker.addListener('mouseover', function() {
-          // do a popup with current info
-          infowindow.open(map, ourClassMarker);
-          updateDevInfo();
-        });
-        
-        // hide info if move moved away
-        ourClassMarker.addListener('mouseout', function() {
-          // remove popup 
-          infowindow.close();
+          position: { lat: lat, lng: lon },
+          icon: {
+            url: `http://maps.google.com/mapfiles/ms/icons/${iconColor}-dot.png`
+          },
+          title: "this is the title"
         });
 
-        // display info on mouseover
-        exampleMarker.addListener('mouseover', function() {
-          // do a popup with current info
-          exinfowindow.open(map, exampleMarker);
-          updateDevInfo();
+        marker.addListener('click', function () {
+          infowindow.open(map, marker);
+          updateBleInfo(infowindow, devmac);
+          
         });
-        
-        function updateDevInfo() {
+
+        marker.addListener('mouseover', function () {
+          infowindow.open(map, marker);
+          updateDevInfo(infowindow, devmac);
+        });
+
+        marker.addListener('mouseout', function () {
+
+        });
+
+
+      }
+
+      function updateDevInfo(window, devmac) {
+
+        // do some AJAX magic to show updated data
+        var xmlhttp = new XMLHttpRequest();
+
+        xmlhttp.onreadystatechange = function () {
+          if (this.readyState == 4 && this.status == 200) {
+            var statsObj = JSON.parse(this.responseText);
+            var ourClass;
+
+            // var devmac = statsObj.devlogs[i].mac;
+            var gid = statsObj.devlogs[0].groupID;
+            var rssi = statsObj.devlogs[0].rssi;
+            // var lastseen = statsObj.devlogs[i].lastseen;
+
+            //ourClass = group_name+" ("+gid+")<br> MAC ("+mac+")<br>Time: "+ts;
+            ourClass = '<center> group: ' + ' (' + gid + ')</center>';
+            ourClass += '<table><tr>';
+            ourClass += '<td><div id="RSSIchart_div"></div></td>';
+            ourClass += '</tr></table>';
+
+            window.setContent(ourClass);
+            drawGauge(rssi);
+
+          }
+        };
+
+        var cmdObj = { cmd: "DEVLIST", mac: devmac};
+        var cmdStr = JSON.stringify(cmdObj);
+        xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/API.py", true);
+        xmlhttp.setRequestHeader('Content-Type', 'application/json');
+        xmlhttp.send(cmdStr);
+      };
+
+      function updateBleInfo(window, devmac) {
+        var xmlhttp = new XMLHttpRequest();
+
+        xmlhttp.onreadystatechange = function () {
+          if (this.readyState == 4 && this.status == 200) {
+            var ourClass;
+            var statsObj = JSON.parse(this.responseText);
             
-            // do some AJAX magic to show updated data
-            var xmlhttp = new XMLHttpRequest();
+            for (var i = 0; i < statsObj.blelogs.length; i++) {
+              var bleColor;
 
-            xmlhttp.onreadystatechange = function() {
-                if (this.readyState == 4 && this.status == 200) {
-                	
-                    var statsObj = JSON.parse(this.responseText);
-                    var mac = statsObj.device[0].mac;
-                    var ts = statsObj.device[0].lastseen;
-                    var group_name = statsObj.device[0].groupName;
-                    var gid = statsObj.device[0].groupID;
-                    var rssi = statsObj.device[0].rssi;
-                    //ourClass = group_name+" ("+gid+")<br> MAC ("+mac+")<br>Time: "+ts;
-                    ourClass = '<center>'+group_name+' ('+gid+')</center>';
-                    ourClass += '<table><tr>';
-                    ourClass += '<td><div id="RSSIchart_div"></div></td>';
-                    ourClass += '</tr></table>';
-                    infowindow.setContent(ourClass);
-					drawGauge(rssi);
-                }
-            };
+              var ts = statsObj.blelogs[i].timestamp;
+              var devmac = statsObj.blelogs[i].devmac;
+              var blemac = statsObj.blelogs[i].blemac;
+              var blerssi = statsObj.blelogs[i].blerssi;  
+              var date = new Date(ts);
+              
+              //ourClass = group_name+" ("+gid+")<br> MAC ("+mac+")<br>Time: "+ts;
+              ourClass = `place holder for now; use html with attrs to highlight status; test date ${date}`
+              /* fix window; generalize */
+              window.setContent(ourClass);
+            }
+          }
+        };
 
-
-			var jObj;
-		    jObj = {cmd:"DEVINFO"};
-		    jObj['mac'] = "80:7D:3A:A2:9C:08";
-		   
-		    var jStr = JSON.stringify(jObj);
-		    var urlStr = "http://dsc-iot.ucsd.edu/api_ian/sampleAPI.py";
-		    xmlhttp.open("POST", urlStr, true);
-		    xmlhttp.setRequestHeader('Content-Type', 'application/json');
-		    xmlhttp.send(jStr);
-        }
-        
-        function drawGauge(rssi) {
-
-            var dataRSSI = google.visualization.arrayToDataTable([
-              ['Label', 'Value'],
-              ['RSSI dB', 0],
-            ]);
-
-            var optionsR = {
-              width: 160, height: 120,
-              redFrom: -99, redTo: -90,
-              yellowFrom:-89, yellowTo: -75,
-              greenFrom: -74, greenTo: 0,
-              minorTicks: 5,
-              max: 0,
-              min: -100
-            };
-
-            var RSSIchart = new google.visualization.Gauge(document.getElementById('RSSIchart_div'));
-            dataRSSI.setValue(0, 1, rssi);
-            RSSIchart.draw(dataRSSI, optionsR);
-        }
+        var cmdObj = { cmd: "BLELIST", devmac: devmac};
+        var cmdStr = JSON.stringify(cmdObj);
+        xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/API.py", true);
+        xmlhttp.setRequestHeader('Content-Type', 'application/json');
+        xmlhttp.send(cmdStr);
 
       }
-      
-    </script>
-    <script async defer
+
+      function drawGauge(rssi) {
+
+        var dataRSSI = google.visualization.arrayToDataTable([
+          ['Label', 'Value'],
+          ['RSSI dB', 0],
+        ]);
+
+        var optionsR = {
+          width: 160, height: 120,
+          redFrom: -99, redTo: -90,
+          yellowFrom: -89, yellowTo: -75,
+          greenFrom: -74, greenTo: 0,
+          minorTicks: 5,
+          max: 0,
+          min: -100
+        };
+
+        var RSSIchart = new google.visualization.Gauge(document.getElementById('RSSIchart_div'));
+        dataRSSI.setValue(0, 1, rssi);
+        RSSIchart.draw(dataRSSI, optionsR);
+
+      }
+
+    }
+
+  </script>
+  <script async defer
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBRQQ4iVEx6ijcbOgwtc7Y95i7tMdlqtvw&callback=initMap">
     </script>
-  </body>
-</html>
+</body>
 
+</html>
