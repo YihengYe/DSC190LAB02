@@ -83,11 +83,11 @@ def get_devlist(params, cursor, is_get):
     if (not gid) and (not mac):
         sql = "SELECT * FROM iotdb.devlogs LIMIT 5"
     elif (not mac):
-        sql = "SELECT * FROM iotdb.devlogs WHERE groupID='{0}' ORDER BY devlog_id DESC limit 5".format(gid)
+        sql = "SELECT * FROM iotdb.devlogs WHERE groupID='{0}' ORDER BY devlogID DESC limit 5".format(gid)
     elif (not gid):
-        sql = "SELECT * FROM idtdb.devlogs WHERE mac='{0}' ORDER BY devlog_id DESC limit 5".format(mac)
+        sql = "SELECT * FROM idtdb.devlogs WHERE mac='{0}' ORDER BY devlogID DESC limit 5".format(mac)
     else:
-        sql ="SELECT * FROM idtdb.devlogs WHERE mac='{0}' and groupID='{1}' ORDER BY devlog_id DESC limit 5".format(mac, gid)
+        sql ="SELECT * FROM idtdb.devlogs WHERE mac='{0}' and groupID='{1}' ORDER BY devlogID DESC limit 5".format(mac, gid)
         
 
     data = execute_sql(sql, cursor)
