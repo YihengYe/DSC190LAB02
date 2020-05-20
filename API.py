@@ -231,8 +231,9 @@ def get_log(params, cursor, is_get):
         print(dev_update)
 
     beacons = params['beacons']
-    # log into blelogs
-    for i in beacons:
+    sql="INSERT INTO iotdb.blelogs(gid, devmac, blemac, blerssi, timestamp) VALUES "
+    bec_dict=[]
+    for idx, i in enumerate(beacons):
         if is_get:
             gid = params['gid'].value
             blemac = i['mac'].value
@@ -244,21 +245,26 @@ def get_log(params, cursor, is_get):
             devmac = params['devmac']
             blerssi = i['rssi']
         rntime=get_global_time()
+        if blemac in bec_dict:
+            pass #only one unique ble
+        else:
+            row ="('{0}', '{1}', '{2}', '{3}','{4}')".format(gid, devmac, blemac, blerssi, rntime)
+            bec_dict.append(blemac)
+            if idx<len(beacons)-1:
+                sql=sql+row+','
+            else:
+                sql=sql+row+';'
 
-        sql = "INSERT INTO iotdb.blelogs(gid, devmac, blemac, blerssi, timestamp) \
-            VALUES('{0}', '{1}', '{2}', '{3}','{4}')".format(gid, devmac, blemac, blerssi, rntime)
+    try:
+        execute_sql(sql, cursor)
+        connection.commit()
 
-        try:
-            execute_sql(sql, cursor)
-            connection.commit()
+        status='successed'
+    except Exception as err:
+        print(err)
+        status="failed"
+    format_result(['timestamp', 'status'], [time, status])
 
-            status='successed'
-        except Exception as err:
-            print(err)
-            status="failed"
-
-        format_result(['timestamp', 'status'], [time, status])
-        tts.sleep(0.5)
 
 
 # def post_reg(params, cursor):
