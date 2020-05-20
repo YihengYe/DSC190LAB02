@@ -246,7 +246,10 @@ def get_log(params, cursor, is_get):
             blerssi = i['rssi']
         rntime=get_global_time()
         if blemac in bec_dict:
-            pass #only one unique ble
+            if idx==len(beacons)-1:
+                row ="('{0}', '{1}', '{2}', '{3}','{4}')".format(gid, devmac, blemac, blerssi, rntime)
+                sql=sql+row+';'
+
         else:
             row ="('{0}', '{1}', '{2}', '{3}','{4}')".format(gid, devmac, blemac, blerssi, rntime)
             bec_dict.append(blemac)
