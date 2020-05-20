@@ -373,7 +373,7 @@ def main():
 
     if cmd_line =='BLELIST':
         get_blelist(params, cursor, GET)
-        
+
     if cmd_line =='DEVLIST':
         get_devlist(params, cursor, GET)
 
