@@ -25,8 +25,8 @@
 
 <body>
   <div id='navbar'>
-    <button id="btn-display" onclick="toggleMyMarker()" style="font-style: normal;
-    font-weight: 400; background-color: white; z-index: -1; padding: 2px; border-bottom-left-radius: 2px; border-bottom-right-radius: 2px; -webkit-box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px; box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px; position: absolute; left: 0px; top: 40px; text-align: left; display: none;">Hide Other Markers</button>
+    <button id="btn-display" onclick="toggleMyMarker()"
+      style="position:fixed; margin-left: 45%; margin-right: 45%; z-index: 10;">Hide Other Markers</button>
   </div>
   <div id="map"></div>
 
@@ -67,8 +67,8 @@
 
       var ourClass = "null";
 
-      //        var exLink = '<iframe width=1000 height=600 src="http://cse191iot.ucsd.edu/ian/sample_viewer.html"></iframe>';
-      // var exLink = '<iframe width=400 height=400 src="http://dsc-iot.ucsd.edu/gid03/view.html"></iframe>';
+      //  var exLink = '<iframe width=1000 height=600 src="http://cse191iot.ucsd.edu/ian/sample_viewer.html"></iframe>';
+      var exLink = '<iframe width=400 height=400 src="http://dsc-iot.ucsd.edu/gid03/view.html"></iframe>';
 
       // var exinfowindow = new google.maps.InfoWindow({
       //   content: exLink,
@@ -158,6 +158,13 @@
           maxWidth: 400
         });
 
+
+        var exinfowindow = new google.maps.InfoWindow({
+          content: exLink,
+          maxWidth: 1000,
+          maxHeight: 600
+        });
+
         marker.addListener('click', function () {
 
           infowindow.open(map, marker);
@@ -169,12 +176,14 @@
         marker.addListener('mouseover', function () {
 
           infowindow.open(map, marker);
+          // exinfowindow.open(map, marker);
           updateDevInfo(infowindow, devmac);
+          // updateBleInfo(exinfowindow, devmac);
         });
 
-        // marker.addListener('mouseout', function () {
-
-        // });
+        marker.addListener('mouseout', function () {
+          infowindow.close();
+        });
       }
 
       function updateDevInfo(window, devmac) {
@@ -183,16 +192,16 @@
         var xmlhttp = new XMLHttpRequest();
 
         xmlhttp.onreadystatechange = function () {
+
           if (this.readyState == 4 && this.status == 200) {
             var statsObj = JSON.parse(this.responseText);
-            var ourClass;
+            var ourClass = "";
 
             var devmac = statsObj.devices[0].mac;
             var gid = statsObj.devices[0].groupID;
             var lastseen = statsObj.devices[0].lastseen;
             var status = statsObj.devices[0].status;
 
-            //ourClass = group_name+" ("+gid+")<br> MAC ("+mac+")<br>Time: "+ts;
             ourClass += "<table class= 'table' id = 'devicesTable'>"
             ourClass += "<thead>"
             ourClass += "<tr>"
@@ -204,9 +213,7 @@
             ourClass += `<tr><td>${lastseen}</td><td>${devmac}</td><td>${gid}</td><td>${status}</td></tr>`
             ourClass += "</thead>"
             ourClass += "</table>"
-
             window.setContent(ourClass);
-
           }
         };
 
@@ -222,9 +229,21 @@
 
         xmlhttp.onreadystatechange = function () {
           if (this.readyState == 4 && this.status == 200) {
-            var ourClass;
+            var ourClass = "";
+
+            ourClass += "<table class= 'table' id = 'blelogsTable'>";
+            ourClass += "<thead>";
+            ourClass += "<tr>";
+            ourClass += "<th>timestamp </th>";
+            ourClass += "<th>devmac </th>";
+            ourClass += "<th>blemac </th>";
+            ourClass += "<th>blerssi </th>";
+            ourClass += "<th>status </th>";
+            ourClass += "</tr>";
+
 
             var statsObj = JSON.parse(this.responseText);
+
 
             for (var i = 0; i < statsObj.blelogs.length; i++) {
               var bleColor;
@@ -237,6 +256,7 @@
               var diff_in_ms = Date.now() - Date.parse(ts);
               var diff_in_ms = Math.abs(diff_in_ms);
               var status;
+
               var tens = 10 * 1000;
               var temin = 10 * 60 * 1000;
               if (diff_in_ms < tens) {
@@ -248,6 +268,7 @@
               else {
                 status = 'TIMEOUT';
               }
+              
               if (status == 'OK') {
                 var color = 'green';
                 status = "<p style='color:" + color + ";'>" + status + "</p>";
@@ -264,24 +285,17 @@
               }
 
               //ourClass = group_name+" ("+gid+")<br> MAC ("+mac+")<br>Time: "+ts;
-              ourClass += "<table class= 'table' id = 'blelogsTable'>"
-              ourClass += "<thead>"
-              ourClass += "<tr>"
-              ourClass += "<th>timestamp </th>"
-              ourClass += "<th>devmac </th>"
-              ourClass += "<th>blemac </th>"
-              ourClass += "<th>blerssi </th>"
-              ourClass += "<th>status </th>"
-              ourClass += "</tr>"
               ourClass += `<tr><td>${ts}</td><td>${devmac}</td><td>${blemac}</td><td>${blerssi}</td><td>${status}</td></tr>`
-              ourClass += "</thead>"
-              ourClass += "</table>"
 
 
               // ourClass = `place holder for now; use html with attrs to highlight status; test date ${date}`
               /* fix window; generalize */
-              window.setContent(ourClass);
             }
+
+            ourClass += "</thead>"
+            ourClass += "</table>"
+
+            window.setContent(ourClass);
           }
         };
 
