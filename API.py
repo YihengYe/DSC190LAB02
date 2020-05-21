@@ -83,11 +83,11 @@ def get_devlist(params, cursor, is_get):
     if (not gid) and (not mac):
         sql = "SELECT * FROM iotdb.devlogs LIMIT 5"
     elif (not mac):
-        sql = "SELECT * FROM iotdb.devlogs WHERE groupID='{0}' ORDER BY devlog_id DESC limit 5".format(gid)
+        sql = "SELECT * FROM iotdb.devlogs WHERE groupID='{0}' ORDER BY devlogID DESC limit 5".format(gid)
     elif (not gid):
-        sql = "SELECT * FROM idtdb.devlogs WHERE mac='{0}' ORDER BY devlog_id DESC limit 5".format(mac)
+        sql = "SELECT * FROM idtdb.devlogs WHERE mac='{0}' ORDER BY devlogID DESC limit 5".format(mac)
     else:
-        sql ="SELECT * FROM idtdb.devlogs WHERE mac='{0}' and groupID='{1}' ORDER BY devlog_id DESC limit 5".format(mac, gid)
+        sql ="SELECT * FROM idtdb.devlogs WHERE mac='{0}' and groupID='{1}' ORDER BY devlogID DESC limit 5".format(mac, gid)
         
 
     data = execute_sql(sql, cursor)
@@ -231,8 +231,9 @@ def get_log(params, cursor, is_get):
         print(dev_update)
 
     beacons = params['beacons']
-    # log into blelogs
-    for i in beacons:
+    sql="INSERT INTO iotdb.blelogs(gid, devmac, blemac, blerssi, timestamp) VALUES "
+    bec_dict=[]
+    for idx, i in enumerate(beacons):
         if is_get:
             gid = params['gid'].value
             blemac = i['mac'].value
@@ -244,21 +245,29 @@ def get_log(params, cursor, is_get):
             devmac = params['devmac']
             blerssi = i['rssi']
         rntime=get_global_time()
+        if blemac in bec_dict:
+            if idx==len(beacons)-1:
+                row ="('{0}', '{1}', '{2}', '{3}','{4}')".format(gid, devmac, blemac, blerssi, rntime)
+                sql=sql+row+';'
 
-        sql = "INSERT INTO iotdb.blelogs(gid, devmac, blemac, blerssi, timestamp) \
-            VALUES('{0}', '{1}', '{2}', '{3}','{4}')".format(gid, devmac, blemac, blerssi, rntime)
+        else:
+            row ="('{0}', '{1}', '{2}', '{3}','{4}')".format(gid, devmac, blemac, blerssi, rntime)
+            bec_dict.append(blemac)
+            if idx<len(beacons)-1:
+                sql=sql+row+','
+            else:
+                sql=sql+row+';'
 
-        try:
-            execute_sql(sql, cursor)
-            connection.commit()
+    try:
+        execute_sql(sql, cursor)
+        connection.commit()
 
-            status='successed'
-        except Exception as err:
-            print(err)
-            status="failed"
+        status='successed'
+    except Exception as err:
+        print(err)
+        status="failed"
+    format_result(['timestamp', 'status'], [time, status])
 
-        format_result(['timestamp', 'status'], [time, status])
-        tts.sleep(0.5)
 
 
 # def post_reg(params, cursor):
