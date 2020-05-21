@@ -3,7 +3,7 @@
 
 <head>
   <title>DSC190 Map Viewer</title>
-  <script type="texgit t/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <meta name="viewport" content="initial-scale=1.0">
   <meta charset="utf-8">
   <style>
@@ -24,6 +24,9 @@
 </head>
 
 <body>
+  <div id='navbar'>
+    <button id="btn-display" onclick="toggleMyMarker()" style="background-color: white; z-index: -1; padding: 2px; border-bottom-left-radius: 2px; border-bottom-right-radius: 2px; -webkit-box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px; box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px; position: absolute; left: 0px; top: 40px; text-align: left; display: none;">Hide Other Markers</button>
+  </div>
   <div id="map"></div>
 
   <script>
@@ -31,7 +34,31 @@
     // init charts
     google.charts.load('current', { 'packages': ['gauge'] });
     //      google.charts.setOnLoadCallback(drawGauges);
+    var otherMarkers = [];
 
+    function toggleMyMarker() {
+      var toggleButton = document.getElementById("btn-display");
+      console.log(toggleButton.innerHTML);
+      if (toggleButton.innerHTML == "Hide Other Markers") {
+
+        otherMarkers.forEach(blockMarker);
+        toggleButton.textContent = "Show Other Markers";
+      }
+
+      else if (toggleButton.innerHTML == "Show Other Markers") {
+
+        otherMarkers.forEach(showMarker);
+        toggleButton.textContent = "Hide Other Markers";
+      }
+    };
+
+    function blockMarker(marker) {
+      marker.setVisible(false);
+    };
+
+    function showMarker(marker) {
+      marker.setVisible(true);
+    };
 
     function initMap() {
 
@@ -40,64 +67,25 @@
       var ourClass = "null";
 
       //        var exLink = '<iframe width=1000 height=600 src="http://cse191iot.ucsd.edu/ian/sample_viewer.html"></iframe>';
-      var exLink = '<iframe width=400 height=400 src="http://dsc-iot.ucsd.edu/gid03/view.html"></iframe>';
+      // var exLink = '<iframe width=400 height=400 src="http://dsc-iot.ucsd.edu/gid03/view.html"></iframe>';
 
-      var exinfowindow = new google.maps.InfoWindow({
-        content: exLink,
-        maxWidth: 1000,
-        maxHeight: 600
-      });
+      // var exinfowindow = new google.maps.InfoWindow({
+      //   content: exLink,
+      //   maxWidth: 1000,
+      //   maxHeight: 600
+      // });
 
 
       var map = new google.maps.Map(document.getElementById('map'), {
         zoom: 15,
-        center: YihengPosition,
+        center: { lat: 32.883, lng: -117.234 },
         title: 'UCSD CSE191'
       });
 
       placeMarker();
-      //   position: YihengPosition,
-      //   //          content: ourClass,
-      //   map: map,
-      //   title: 'Jason\'s Coffee Shop'
-      // });
-
-      // var YifeiMarker = new google.maps.Marker({
-      //   position: YifeiPosition,
-      //   //          content: exampleLink,
-      //   map: map,
-      //   title: 'Our Example'
-      // });
-
-      // zoom if clicked example
-      // YihengMarker.addListener('click', function () {
-      //   map.setZoom(18);
-      //   map.setCenter(YihengMarker.getPosition());
-      // });
-
-      // // display info on mouseover
-      // YihengMarker.addListener('mouseover', function () {
-      //   // do a popup with current info
-      //   infowindow.open(map, YihengMarker);
-      //   updateDevices();
-      // });
-
-      // // hide info if move moved away
-      // YihengMarker.addListener('mouseout', function () {
-      //   // remove popup 
-      //   infowindow.close();
-      // });
-
-      // // display info on mouseover
-      // YifeiMarker.addListener('click', function () {
-      //   // do a popup with current info
-      //   exinfowindow.open(map, YifeiMarker);
-      //   updateDevices();
-      // });
-
 
       // place marker by devices
-      
+
       function placeMarker() {
         var xmlhttp = new XMLHttpRequest();
         xmlhttp.onload = function () {
@@ -108,21 +96,25 @@
           }
         };
 
-        var cmdObj = { "cmd": "LIST"};
+        var cmdObj = { "cmd": "LIST" };
         var cmdStr = JSON.stringify(cmdObj);
         xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
         xmlhttp.setRequestHeader('Content-Type', 'application/json');
         xmlhttp.send(cmdStr);
       };
 
-      // format and digest DevInfo from back-end
       function fillingInfo(device) {
-
         var gid = device.groupID;
         var devmac = device.mac;
         var status = device.status;
         var lon = device.dev_long;
         var lat = device.dev_lat;
+
+
+        if (lon == null || lat == null) {
+          return 'invalid device position'
+        };
+
 
         /* null lat & lon val */
         var iconColor;
@@ -137,7 +129,7 @@
         else if (status == 'TIMEOUT') {
           iconColor = 'red';
         }
-        else if (statis == 'WARNING') {
+        else if (status == 'WARNING') {
           iconColor = 'yellow';
         }
 
@@ -152,33 +144,36 @@
           icon: {
             url: `http://maps.google.com/mapfiles/ms/icons/${iconColor}-dot.png`
           },
-          title: "this is the title"
+          title: `marker-${devmac}`,
+          visible: true
         });
 
+        if (gid != '3') {
+          otherMarkers.push(marker);
+          console.log(devmac);
+        };
 
         var infowindow = new google.maps.InfoWindow({
           maxWidth: 400
         });
 
-
-        marker.addListener('mouseover', function () {
+        marker.addListener('click', function () {
 
           infowindow.open(map, marker);
+          /* initalize the infowindow and then do updates.. */
           updateBleInfo(infowindow, devmac);
 
         });
 
-        marker.addListener('click', function () {
+        marker.addListener('mouseover', function () {
 
-          // infowindow.open(map, marker);
-          // updateDevInfo(infowindow, devmac);
+          infowindow.open(map, marker);
+          updateDevInfo(infowindow, devmac);
         });
 
-        marker.addListener('mouseout', function () {
+        // marker.addListener('mouseout', function () {
 
-        });
-
-
+        // });
       }
 
       function updateDevInfo(window, devmac) {
@@ -191,24 +186,30 @@
             var statsObj = JSON.parse(this.responseText);
             var ourClass;
 
-            // var devmac = statsObj.devlogs[i].mac;
-            var gid = statsObj.devlogs[0].groupID;
-            var rssi = statsObj.devlogs[0].rssi;
-            // var lastseen = statsObj.devlogs[i].lastseen;
+            var devmac = statsObj.devices[0].mac;
+            var gid = statsObj.devices[0].groupID;
+            var lastseen = statsObj.devices[0].lastseen;
+            var status = statsObj.devices[0].status;
 
             //ourClass = group_name+" ("+gid+")<br> MAC ("+mac+")<br>Time: "+ts;
-            ourClass = '<center> group: ' + ' (' + gid + ')</center>';
-            ourClass += '<table><tr>';
-            ourClass += '<td><div id="RSSIchart_div"></div></td>';
-            ourClass += '</tr></table>';
+            ourClass += "<table class= 'table' id = 'devicesTable'>"
+            ourClass += "<thead>"
+            ourClass += "<tr>"
+            ourClass += "<th>timestamp </th>"
+            ourClass += "<th>devmac </th>"
+            ourClass += "<th>gid </th>"
+            ourClass += "<th>status </th>"
+            ourClass += "</tr>"
+            ourClass += `<tr><td>${lastseen}</td><td>${devmac}</td><td>${gid}</td><td>${status}</td></tr>`
+            ourClass += "</thead>"
+            ourClass += "</table>"
 
             window.setContent(ourClass);
-            drawGauge(rssi);
 
           }
         };
 
-        var cmdObj = { "cmd": "DEVLIST", "mac": devmac };
+        var cmdObj = { "cmd": "LIST", "mac": devmac };
         var cmdStr = JSON.stringify(cmdObj);
         xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
         xmlhttp.setRequestHeader('Content-Type', 'application/json');
@@ -232,6 +233,34 @@
               var blemac = statsObj.blelogs[i].blemac;
               var blerssi = statsObj.blelogs[i].blerssi;
               var date = new Date(ts);
+              var diff_in_ms = Date.now() - Date.parse(ts);
+              var diff_in_ms = Math.abs(diff_in_ms);
+              var status;
+              var tens = 10 * 1000;
+              var temin = 10 * 60 * 1000;
+              if (diff_in_ms < tens) {
+                status = 'OK';
+              }
+              else if (diff_in_ms < temin) {
+                status = 'WARNING';
+              }
+              else {
+                status = 'TIMEOUT';
+              }
+              if (status == 'OK') {
+                var color = 'green';
+                status = "<p style='color:" + color + ";'>" + status + "</p>";
+              }
+              else if (status == 'WARNING') {
+                var color = 'yellow';
+                status = "<p style='color:" + color + ";'>" + status + "</p>";
+
+
+              }
+              else {
+                var color = 'red';
+                status = "<p style='color:" + color + ";'>" + status + "</p>";
+              }
 
               //ourClass = group_name+" ("+gid+")<br> MAC ("+mac+")<br>Time: "+ts;
               ourClass += "<table class= 'table' id = 'blelogsTable'>"
@@ -241,8 +270,9 @@
               ourClass += "<th>devmac </th>"
               ourClass += "<th>blemac </th>"
               ourClass += "<th>blerssi </th>"
+              ourClass += "<th>status </th>"
               ourClass += "</tr>"
-              ourClass += `<tr><td>${ts}</td><td>${devmac}</td><td>${blemac}</td><td>${blerssi}</td></tr>`
+              ourClass += `<tr><td>${ts}</td><td>${devmac}</td><td>${blemac}</td><td>${blerssi}</td><td>${status}</td></tr>`
               ourClass += "</thead>"
               ourClass += "</table>"
 
@@ -261,7 +291,7 @@
         xmlhttp.setRequestHeader('Content-Type', 'application/json');
         xmlhttp.send(cmdStr);
 
-      }
+      };
 
       function drawGauge(rssi) {
 
