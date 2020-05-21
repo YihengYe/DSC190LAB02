@@ -59,6 +59,7 @@ def get_list(params, cursor, is_get):
             mac = params['mac']
     except:
         mac = None
+        
     
     if (not gid) and (not mac):
         sql = "SELECT * FROM iotdb.devices"
