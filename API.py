@@ -52,10 +52,20 @@ def get_list(params, cursor, is_get):
     except:
         gid = None
     
-    if (not gid):
+    try:
+        if is_get:
+            mac = params['mac'].value
+        else:
+            mac = params['mac']
+    except:
+        mac = None
+    
+    if (not gid) and (not mac):
         sql = "SELECT * FROM iotdb.devices"
-    else:
+    elif (not mac):
         sql = "SELECT * FROM iotdb.devices WHERE groupID=%s" % gid
+    else:
+        sql="SELECT * FROM iotdb.devices WHERE mac='{0}'".format(mac)
 
     data = execute_sql(sql, cursor)
     for item in data:
