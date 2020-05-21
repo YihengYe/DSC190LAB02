@@ -39,11 +39,6 @@
 
       var ourClass = "null";
 
-      var infowindow = new google.maps.InfoWindow({
-        content: ourClass,
-        maxWidth: 300
-      });
-
       //        var exLink = '<iframe width=1000 height=600 src="http://cse191iot.ucsd.edu/ian/sample_viewer.html"></iframe>';
       var exLink = '<iframe width=400 height=400 src="http://dsc-iot.ucsd.edu/gid03/view.html"></iframe>';
 
@@ -53,17 +48,14 @@
         maxHeight: 600
       });
 
-      var YihengPosition = { lat: 32.881928, lng: -117.233652 };
-      var YifeiPosition = { lat: 32.882988, lng: -117.233692 };
-
 
       var map = new google.maps.Map(document.getElementById('map'), {
         zoom: 15,
         center: YihengPosition,
         title: 'UCSD CSE191'
       });
+
       placeMarker();
-      // var YihengMarker = new google.maps.Marker({
       //   position: YihengPosition,
       //   //          content: ourClass,
       //   map: map,
@@ -105,6 +97,7 @@
 
 
       // place marker by devices
+      
       function placeMarker() {
         var xmlhttp = new XMLHttpRequest();
         xmlhttp.onload = function () {
@@ -115,7 +108,7 @@
           }
         };
 
-        var cmdObj = {"cmd": "LIST" };
+        var cmdObj = { "cmd": "LIST"};
         var cmdStr = JSON.stringify(cmdObj);
         xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
         xmlhttp.setRequestHeader('Content-Type', 'application/json');
@@ -124,13 +117,14 @@
 
       // format and digest DevInfo from back-end
       function fillingInfo(device) {
+
         var gid = device.groupID;
         var devmac = device.mac;
         var status = device.status;
         var lon = device.dev_long;
         var lat = device.dev_lat;
 
-
+        /* null lat & lon val */
         var iconColor;
         if (status == 'OK') {
           iconColor = 'green';
@@ -141,7 +135,14 @@
         }
 
         else if (status == 'TIMEOUT') {
+          iconColor = 'red';
+        }
+        else if (statis == 'WARNING') {
           iconColor = 'yellow';
+        }
+
+        else {
+          iconColor = 'blue';
         }
 
 
@@ -154,15 +155,23 @@
           title: "this is the title"
         });
 
-        marker.addListener('click', function () {
-          infowindow.open(map, marker);
-          updateBleInfo(infowindow, devmac);
-          
+
+        var infowindow = new google.maps.InfoWindow({
+          maxWidth: 400
         });
 
+
         marker.addListener('mouseover', function () {
+
           infowindow.open(map, marker);
-          updateDevInfo(infowindow, devmac);
+          updateBleInfo(infowindow, devmac);
+
+        });
+
+        marker.addListener('click', function () {
+
+          // infowindow.open(map, marker);
+          // updateDevInfo(infowindow, devmac);
         });
 
         marker.addListener('mouseout', function () {
@@ -199,7 +208,7 @@
           }
         };
 
-        var cmdObj = {"cmd": "DEVLIST", "mac": devmac};
+        var cmdObj = { "cmd": "DEVLIST", "mac": devmac };
         var cmdStr = JSON.stringify(cmdObj);
         xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
         xmlhttp.setRequestHeader('Content-Type', 'application/json');
@@ -212,19 +221,33 @@
         xmlhttp.onreadystatechange = function () {
           if (this.readyState == 4 && this.status == 200) {
             var ourClass;
+
             var statsObj = JSON.parse(this.responseText);
-            
+
             for (var i = 0; i < statsObj.blelogs.length; i++) {
               var bleColor;
 
               var ts = statsObj.blelogs[i].timestamp;
               var devmac = statsObj.blelogs[i].devmac;
               var blemac = statsObj.blelogs[i].blemac;
-              var blerssi = statsObj.blelogs[i].blerssi;  
+              var blerssi = statsObj.blelogs[i].blerssi;
               var date = new Date(ts);
-              
+
               //ourClass = group_name+" ("+gid+")<br> MAC ("+mac+")<br>Time: "+ts;
-              ourClass = `place holder for now; use html with attrs to highlight status; test date ${date}`
+              ourClass += "<table class= 'table' id = 'blelogsTable'>"
+              ourClass += "<thead>"
+              ourClass += "<tr>"
+              ourClass += "<th>timestamp </th>"
+              ourClass += "<th>devmac </th>"
+              ourClass += "<th>blemac </th>"
+              ourClass += "<th>blerssi </th>"
+              ourClass += "</tr>"
+              ourClass += `<tr><td>${ts}</td><td>${devmac}</td><td>${blemac}</td><td>${blerssi}</td></tr>`
+              ourClass += "</thead>"
+              ourClass += "</table>"
+
+
+              // ourClass = `place holder for now; use html with attrs to highlight status; test date ${date}`
               /* fix window; generalize */
               window.setContent(ourClass);
             }
@@ -232,7 +255,7 @@
         };
 
         var cmdObj;
-        cmdObj = {"cmd": "BLELIST", "devmac": devmac};
+        cmdObj = { "cmd": "BLELIST", "devmac": devmac };
         var cmdStr = JSON.stringify(cmdObj);
         xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
         xmlhttp.setRequestHeader('Content-Type', 'application/json');
