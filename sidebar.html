@@ -18,21 +18,33 @@
 
         function drawSeriesChart() {
 
-            var data = google.visualization.arrayToDataTable([
-                ['demac', 'latitude', 'longitude', 'devices', 'counts'],
-                ['CAN', 80.66, 1.67, 'North America', 33739900],
-                ['DEU', 79.84, 1.36, 'Europe', 81902307],
-            ]);
+            readTextFile('./assets/viz-data.json', function (text) {
+                var jObj = JSON.parse(text);
+                console.log(jObj[0]);
+                var rawData = [];
 
-            var options = {
-                title: 'population density estimated by rssi counts',
-                hAxis: { title: 'latitude' },
-                vAxis: { title: 'longitude' },
-                bubble: { textStyle: { fontSize: 11 } }
-            };
+                rawData.push(Object.keys(jObj[0]));
+                console.log(rawData);
+                for (var i in jObj) {
+                    var devmac = jObj[i].devmac;
+                    var count = jObj[i]["COUNT(DISTINCT blemac)"];
+                    var lat = jObj[i].dev_lat;
+                    var lon = jObj[i].dev_long;
+                    rawData.push([devmac, lat, lon, count]);
+                    
+                }
 
-            var chart = new google.visualization.BubbleChart(document.getElementById('series_chart_div'));
-            chart.draw(data, options);
+
+                var options = {
+                    title: 'population density estimated by rssi counts',
+                    hAxis: { title: 'latitude' },
+                    vAxis: { title: 'longitude' },
+                    bubble: { textStyle: { fontSize: 11 } }
+                };
+
+                var chart = new google.visualization.BubbleChart(document.getElementById('series_chart_div'));
+                chart.draw(google.visualization.arrayToDataTable(rawData), options);
+            })
         }
 
 
@@ -45,8 +57,19 @@
         function showSidebar() {
             document.getElementById("mySidebar").style.display = "block";
         }
-        
-    
+
+        function readTextFile(file, callback) {
+            var rawFile = new XMLHttpRequest();
+            rawFile.overrideMimeType("application/json");
+            rawFile.open("GET", file, true);
+            rawFile.onreadystatechange = function () {
+                if (rawFile.readyState === 4 && rawFile.status == "200") {
+                    callback(rawFile.responseText);
+                }
+            }
+            rawFile.send(null);
+        }
+
     </script>
 
     <!-- TODO -->
