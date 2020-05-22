@@ -6,6 +6,7 @@
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <meta name="viewport" content="initial-scale=1.0">
   <meta charset="utf-8">
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
   <style>
     /* Always set the map height explicitly to define the size of the div
        * element that contains the map. */
@@ -23,10 +24,16 @@
   </style>
 </head>
 
-<body>
+<body onclick="hideSidebar()">
   <div id='navbar'>
     <button id="btn-display" onclick="toggleMyMarker()"
       style="position:fixed; margin-left: 45%; margin-right: 45%; z-index: 10;">Hide Other Markers</button>
+  </div>
+  <div id="mySidebar" style = "display: none;">
+    <div class="w3-sidebar w3-bar-block w3-collapse w3-card w3-animate-right" style="width:45%; right:0;">
+      <div id="series_chart_div" style="width: 100%; height: 100%"></div>
+    </div>
+
   </div>
   <div id="map"></div>
 
@@ -170,8 +177,10 @@
           infowindow.open(map, marker);
           /* initalize the infowindow and then do updates.. */
           updateBleInfo(infowindow, devmac);
-
+          showSidebar();
         });
+
+        // marker.addListener('ondblclick', showSidebar);
 
         marker.addListener('mouseover', function () {
 
@@ -268,7 +277,7 @@
               else {
                 status = 'TIMEOUT';
               }
-              
+
               if (status == 'OK') {
                 var color = 'green';
                 status = "<p style='color:" + color + ";'>" + status + "</p>";
@@ -333,10 +342,68 @@
 
     }
 
+    // viz part
+
+    function drawSeriesChart() {
+
+      readTextFile('./assets/viz-data.json', function (text) {
+        var jObj = JSON.parse(text);
+        var rawData = [];
+
+        // rawData.push(Object.keys(jObj[0]));
+        rawData.push(['id', 'lat', 'lon', 'devmac', 'count']);
+
+        for (var i in jObj) {
+          var devmac = jObj[i].devmac;
+          var count = jObj[i]["COUNT(DISTINCT blemac)"];
+          var lat = jObj[i].dev_lat;
+          var lon = jObj[i].dev_long;
+          rawData.push([null, lat, lon, devmac, count]);
+
+        }
+        var options = {
+          title: 'population density estimated by rssi counts',
+          hAxis: { title: 'latitude' },
+          vAxis: { title: 'longitude' },
+          bubble: { textStyle: { fontSize: 11 } }
+        };
+        console.log(rawData)
+        var data = google.visualization.arrayToDataTable(rawData)
+        var chart = new google.visualization.BubbleChart(document.getElementById('series_chart_div'));
+        chart.draw(data, options);
+      })
+    }
+
+    function hideSidebar() {
+      // console.log(document.getElementById("mySidebar").style.display);
+      document.getElementById("mySidebar").style.display = "none";
+      // console.log(document.getElementById("mySidebar").style.display)
+    };
+
+    function showSidebar() {
+      document.getElementById("mySidebar").style.display = "block";
+    }
+
+    function readTextFile(file, callback) {
+      var rawFile = new XMLHttpRequest();
+      rawFile.overrideMimeType("application/json");
+      rawFile.open("GET", file, true);
+      rawFile.onreadystatechange = function () {
+        if (rawFile.readyState === 4 && rawFile.status == "200") {
+          callback(rawFile.responseText);
+        }
+      }
+      rawFile.send(null);
+    }
+
+    google.charts.load('current', { 'packages': ['corechart'] });
+    google.charts.setOnLoadCallback(drawSeriesChart);
+
   </script>
   <script async defer
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBRQQ4iVEx6ijcbOgwtc7Y95i7tMdlqtvw&callback=initMap">
     </script>
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 </body>
 
 </html>
