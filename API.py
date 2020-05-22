@@ -8,6 +8,7 @@ from flask import Flask, request
 from datetime import date
 from datetime import datetime
 import time as tts
+
 #import cgitb
 import cgi, cgitb
 #cgitb.enable()
@@ -280,10 +281,11 @@ def get_log(params, cursor, is_get):
     format_result(['timestamp', 'status'], [time, status])
 
 def viz(cursor):
-    sql1='select devmac, COUNT(DISTINCT blemac) from iotdb.blelogs WHERE blelog_id>105944476 group by devmac'
+    sql1='select devmac, COUNT(DISTINCT blemac) AS unique_ble from iotdb.blelogs WHERE blelog_id>105944476 group by devmac'
     sql2='SELECT mac, dev_lat,dev_long from iotdb.devices WHERE dev lat is not null'
     data1=execute_sql(sql1, cursor)
     data2=execute_sql(sql2, cursor)
+   
 
 # def post_reg(params, cursor):
 #     mac = params['mac']
@@ -394,6 +396,8 @@ def main():
 
     if cmd_line =='DEVLIST':
         get_devlist(params, cursor, GET)
+    if cmd_line =='VIZ':
+        viz(cursor)
 
 
   #   if GET:
