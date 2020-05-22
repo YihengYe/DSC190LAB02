@@ -24,7 +24,7 @@
   </style>
 </head>
 
-<body onclick="hideSidebar()">
+<body>
   <div id='navbar'>
     <button id="btn-display" onclick="toggleMyMarker()"
       style="position:fixed; margin-left: 45%; margin-right: 45%; z-index: 10;">Hide Other Markers</button>
@@ -35,7 +35,7 @@
     </div>
 
   </div>
-  <div id="map"></div>
+  <div id="map" ></div>
 
   <script>
 
@@ -66,6 +66,7 @@
 
     function showMarker(marker) {
       marker.setVisible(true);
+      console.log('sidebar func')
     };
 
     function initMap() {
@@ -173,17 +174,15 @@
         });
 
         marker.addListener('click', function () {
-
           infowindow.open(map, marker);
           /* initalize the infowindow and then do updates.. */
           updateBleInfo(infowindow, devmac);
-          showSidebar();
         });
 
         // marker.addListener('ondblclick', showSidebar);
 
         marker.addListener('mouseover', function () {
-
+          showSidebar();
           infowindow.open(map, marker);
           // exinfowindow.open(map, marker);
           updateDevInfo(infowindow, devmac);
@@ -192,6 +191,7 @@
 
         marker.addListener('mouseout', function () {
           infowindow.close();
+          hideSidebar();
         });
       }
 
@@ -375,9 +375,10 @@
     }
 
     function hideSidebar() {
-      // console.log(document.getElementById("mySidebar").style.display);
-      document.getElementById("mySidebar").style.display = "none";
-      // console.log(document.getElementById("mySidebar").style.display)
+      var sidebar = document.getElementById("mySidebar")
+      if (sidebar.style.display == 'block') {
+        sidebar.style.display = "none";
+      }
     };
 
     function showSidebar() {
