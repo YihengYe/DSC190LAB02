@@ -303,7 +303,7 @@ def forecast(cursor):
         print(err)
         status="failed"
     format_result(['timestamp', 'status'], [time, status])
-
+    
 def logmc(cursor, params):
     temp=params['temp']
     gid=params['gid']
@@ -321,6 +321,17 @@ def logmc(cursor, params):
         print(err)
         status="failed"
     format_result(['timestamp', 'status'], [time, status])
+    dev_update="UPDATE iotdb.devices SET lastseen='{0}' WHERE groupID='{1}' AND mac='{2}'".format(time, gid, mac)
+    try:
+        execute_sql(dev_update, cursor)
+        connection.commit()
+
+        status='successed'
+    except Exception as err:
+        print(err)
+        status="failed"
+    format_result(['timestamp', 'status'], [time, status])
+
 
 def post_weather(cursor,params):
     mac=params['devmac']
