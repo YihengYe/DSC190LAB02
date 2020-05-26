@@ -280,11 +280,29 @@ def get_log(params, cursor, is_get):
         status="failed"
     format_result(['timestamp', 'status'], [time, status])
 
-def viz(cursor):
-    sql1='select devmac, COUNT(DISTINCT blemac) AS unique_ble from iotdb.blelogs WHERE blelog_id>105944476 group by devmac'
-    sql2='SELECT mac, dev_lat,dev_long from iotdb.devices WHERE dev lat is not null'
-    data1=execute_sql(sql1, cursor)
-    data2=execute_sql(sql2, cursor)
+def forecast(cursor):
+    url="http://api.openweathermap.org/data/2.5/weather?zip=92037,us&appid=0354c29c5e773c46d37727c8a0455d58"
+    r=requests.get(url)
+    data=r.json()
+    gid='03'
+    privoder="open weather"
+    maininfo=data['main']
+    temp=maininfo['temp']
+    min_temp=maininfo['temp_min']
+    max_temp=maininfo['temp_max']
+    hum=maininfo['humidity']
+    sql="INSERT INTO iotdb.forecast(gid, temp, min_temp, max_temp, hum, timestamp, provider)\
+         VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(gid, temp, min_temp, max_temp, hum, time, privoder)
+
+    try:
+        execute_sql(sql, cursor)
+        connection.commit()
+
+        status='successed'
+    except Exception as err:
+        print(err)
+        status="failed"
+    format_result(['timestamp', 'status'], [time, status])
    
 
 # def post_reg(params, cursor):
@@ -396,8 +414,8 @@ def main():
 
     if cmd_line =='DEVLIST':
         get_devlist(params, cursor, GET)
-    if cmd_line =='VIZ':
-        viz(cursor)
+    if cmd_line =='FORECAST':
+        forecast(cursor)
 
 
   #   if GET:
