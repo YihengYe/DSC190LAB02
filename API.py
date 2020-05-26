@@ -292,7 +292,7 @@ def forecast(cursor):
     max_temp=maininfo['temp_max']
     hum=maininfo['humidity']
     sql="INSERT INTO iotdb.forecast(gid, temp, min_temp, max_temp, hum, timestamp, provider)\
-         VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(gid, temp, min_temp, max_temp, hum, time, privoder)
+         VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}')".format(gid, temp, min_temp, max_temp, hum, time, privoder)
 
     try:
         execute_sql(sql, cursor)
@@ -303,7 +303,33 @@ def forecast(cursor):
         print(err)
         status="failed"
     format_result(['timestamp', 'status'], [time, status])
-   
+
+def logmc(cursor, params):
+    temp=params['temp']
+    gid=params['gid']
+    hum=params['hum']
+    mac=params['mac']
+    devstatus='ACTIVE'
+    sql="INSERT INTO iotdb.mcdata(gid, temp, hum, timerstamp, status, mac)\
+         VALUES ('{0}','{1}','{2}','{3}','{4}','{5}')".format(gid,temp,hum,time, devstatus, mac)
+    try:
+        execute_sql(sql, cursor)
+        connection.commit()
+
+        status='successed'
+    except Exception as err:
+        print(err)
+        status="failed"
+    format_result(['timestamp', 'status'], [time, status])
+
+def post_weather(cursor,params):
+    mac=params['devmac']
+    sql="SELECT avg(temp) as avg_temp, avg(hum) as avg_hum, HOUR(timerstamp) as hour FROM iotdb.mcdata \
+        WHERE mac='{0}' AND NOW<=DATE_ADD(timerstamp, INTERVAL 24 HOUR) GROUP BY hour".format(mac)
+    data = execute_sql(sql, cursor)
+    display_data(data, 'weather')
+
+    
 
 # def post_reg(params, cursor):
 #     mac = params['mac']
@@ -416,6 +442,12 @@ def main():
         get_devlist(params, cursor, GET)
     if cmd_line =='FORECAST':
         forecast(cursor)
+    
+    if cmd_line=='LOGMC':
+        logmc(cursor, params)
+    
+    if cmd_line=="WEATHER":
+        post_weather(cursor, params)
 
 
   #   if GET:
