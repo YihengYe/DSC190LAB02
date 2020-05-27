@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>DSC190 Map Viewer</title>
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <meta name="viewport" content="initial-scale=1.0">
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+  <style>
+    /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+    #map {
+      height: 100%;
+    }
+
+    /* Optional: Makes the sample page fill the window. */
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div id='navbar'>
+    <button id="btn-display" onclick="toggleMyMarker()"
+      style="position:fixed; margin-left: 45%; margin-right: 45%; z-index: 10;">Hide Other Markers</button>
+  </div>
+  <div id="mySidebar" style = "display: none;">
+    <div class="w3-sidebar w3-bar-block w3-collapse w3-card w3-animate-right" style="width:45%; right:0;">
+      <div id="series_chart_div" style="width: 100%; height: 100%"></div>
+    </div>
+
+  </div>
+  <div id="map" ></div>
+
+  <script>
+
+    // init charts
+    google.charts.load('current', { 'packages': ['gauge'] });
+    //      google.charts.setOnLoadCallback(drawGauges);
+    var otherMarkers = [];
+
+    function toggleMyMarker() {
+      var toggleButton = document.getElementById("btn-display");
+      console.log(toggleButton.innerHTML);
+      if (toggleButton.innerHTML == "Hide Other Markers") {
+
+        otherMarkers.forEach(blockMarker);
+        toggleButton.textContent = "Show Other Markers";
+      }
+
+      else if (toggleButton.innerHTML == "Show Other Markers") {
+
+        otherMarkers.forEach(showMarker);
+        toggleButton.textContent = "Hide Other Markers";
+      }
+    };
+
+    function blockMarker(marker) {
+      marker.setVisible(false);
+    };
+
+    function showMarker(marker) {
+      marker.setVisible(true);
+      console.log('sidebar func')
+    };
+
+    function initMap() {
+
+
+
+      var ourClass = "null";
+
+      //  var exLink = '<iframe width=1000 height=600 src="http://cse191iot.ucsd.edu/ian/sample_viewer.html"></iframe>';
+      var exLink = '<iframe width=400 height=400 src="http://dsc-iot.ucsd.edu/gid03/view.html"></iframe>';
+
+      // var exinfowindow = new google.maps.InfoWindow({
+      //   content: exLink,
+      //   maxWidth: 1000,
+      //   maxHeight: 600
+      // });
+
+
+      var map = new google.maps.Map(document.getElementById('map'), {
+        zoom: 15,
+        center: { lat: 32.883, lng: -117.234 },
+        title: 'UCSD CSE191'
+      });
+
+      placeMarker();
+
+      // place marker by devices
+
+      function placeMarker() {
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onload = function () {
+          if (this.readyState == 4 && this.status == 200) {
+            console.log(this.responseText);
+            var statsObj = JSON.parse(this.responseText);
+            statsObj.devices.forEach(fillingInfo);
+          }
+        };
+
+        var cmdObj = { "cmd": "LIST" };
+        var cmdStr = JSON.stringify(cmdObj);
+        xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
+        xmlhttp.setRequestHeader('Content-Type', 'application/json');
+        xmlhttp.send(cmdStr);
+      };
+
+      function fillingInfo(device) {
+        var gid = device.groupID;
+        var devmac = device.mac;
+        var status = device.status;
+        var lon = device.dev_long;
+        var lat = device.dev_lat;
+
+
+        if (lon == null || lat == null) {
+          return 'invalid device position'
+        };
+
+
+        /* null lat & lon val */
+        var iconColor;
+        if (status == 'OK') {
+          iconColor = 'green';
+        }
+
+        else if (status == 'ERROR') {
+          iconColor = 'red';
+        }
+
+        else if (status == 'TIMEOUT') {
+          iconColor = 'red';
+        }
+        else if (status == 'WARNING') {
+          iconColor = 'yellow';
+        }
+
+        else {
+          iconColor = 'blue';
+        }
+
+
+        let marker = new google.maps.Marker({
+          map: map,
+          position: { lat: lat, lng: lon },
+          icon: {
+            url: `http://maps.google.com/mapfiles/ms/icons/${iconColor}-dot.png`
+          },
+          title: `marker-${devmac}`,
+          visible: true
+        });
+
+        if (gid != '3') {
+          otherMarkers.push(marker);
+          console.log(devmac);
+        };
+
+        var infowindow = new google.maps.InfoWindow({
+          maxWidth: 400
+        });
+
+
+        var exinfowindow = new google.maps.InfoWindow({
+          content: exLink,
+          maxWidth: 1000,
+          maxHeight: 600
+        });
+
+        marker.addListener('click', function () {
+          infowindow.open(map, marker);
+          /* initalize the infowindow and then do updates.. */
+          updateBleInfo(infowindow, devmac);
+        });
+
+        // marker.addListener('ondblclick', showSidebar);
+
+        marker.addListener('mouseover', function () {
+          showSidebar();
+          infowindow.open(map, marker);
+          // exinfowindow.open(map, marker);
+          updateDevInfo(infowindow, devmac);
+          // updateBleInfo(exinfowindow, devmac);
+        });
+
+        marker.addListener('mouseout', function () {
+          infowindow.close();
+          hideSidebar();
+        });
+      }
+
+      function updateDevInfo(window, devmac) {
+
+        // do some AJAX magic to show updated data
+        var xmlhttp = new XMLHttpRequest();
+
+        xmlhttp.onreadystatechange = function () {
+
+          if (this.readyState == 4 && this.status == 200) {
+            var statsObj = JSON.parse(this.responseText);
+            var ourClass = "";
+
+            var devmac = statsObj.devices[0].mac;
+            var gid = statsObj.devices[0].groupID;
+            var lastseen = statsObj.devices[0].lastseen;
+            var status = statsObj.devices[0].status;
+
+            ourClass += "<table class= 'table' id = 'devicesTable'>"
+            ourClass += "<thead>"
+            ourClass += "<tr>"
+            ourClass += "<th>timestamp </th>"
+            ourClass += "<th>devmac </th>"
+            ourClass += "<th>gid </th>"
+            ourClass += "<th>status </th>"
+            ourClass += "</tr>"
+            ourClass += `<tr><td>${lastseen}</td><td>${devmac}</td><td>${gid}</td><td>${status}</td></tr>`
+            ourClass += "</thead>"
+            ourClass += "</table>"
+            window.setContent(ourClass);
+          }
+        };
+
+        var cmdObj = { "cmd": "LIST", "mac": devmac };
+        var cmdStr = JSON.stringify(cmdObj);
+        xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
+        xmlhttp.setRequestHeader('Content-Type', 'application/json');
+        xmlhttp.send(cmdStr);
+      };
+
+      function updateBleInfo(window, devmac) {
+        var xmlhttp = new XMLHttpRequest();
+
+        xmlhttp.onreadystatechange = function () {
+          if (this.readyState == 4 && this.status == 200) {
+            var ourClass = "";
+
+            ourClass += "<table class= 'table' id = 'blelogsTable'>";
+            ourClass += "<thead>";
+            ourClass += "<tr>";
+            ourClass += "<th>timestamp </th>";
+            ourClass += "<th>devmac </th>";
+            ourClass += "<th>blemac </th>";
+            ourClass += "<th>blerssi </th>";
+            ourClass += "<th>status </th>";
+            ourClass += "</tr>";
+
+
+            var statsObj = JSON.parse(this.responseText);
+
+
+            for (var i = 0; i < statsObj.blelogs.length; i++) {
+              var bleColor;
+
+              var ts = statsObj.blelogs[i].timestamp;
+              var devmac = statsObj.blelogs[i].devmac;
+              var blemac = statsObj.blelogs[i].blemac;
+              var blerssi = statsObj.blelogs[i].blerssi;
+              var date = new Date(ts);
+              var diff_in_ms = Date.now() - Date.parse(ts);
+              var diff_in_ms = Math.abs(diff_in_ms);
+              var status;
+
+              var tens = 10 * 1000;
+              var temin = 10 * 60 * 1000;
+              if (diff_in_ms < tens) {
+                status = 'OK';
+              }
+              else if (diff_in_ms < temin) {
+                status = 'WARNING';
+              }
+              else {
+                status = 'TIMEOUT';
+              }
+
+              if (status == 'OK') {
+                var color = 'green';
+                status = "<p style='color:" + color + ";'>" + status + "</p>";
+              }
+              else if (status == 'WARNING') {
+                var color = 'yellow';
+                status = "<p style='color:" + color + ";'>" + status + "</p>";
+
+
+              }
+              else {
+                var color = 'red';
+                status = "<p style='color:" + color + ";'>" + status + "</p>";
+              }
+
+              //ourClass = group_name+" ("+gid+")<br> MAC ("+mac+")<br>Time: "+ts;
+              ourClass += `<tr><td>${ts}</td><td>${devmac}</td><td>${blemac}</td><td>${blerssi}</td><td>${status}</td></tr>`
+
+
+              // ourClass = `place holder for now; use html with attrs to highlight status; test date ${date}`
+              /* fix window; generalize */
+            }
+
+            ourClass += "</thead>"
+            ourClass += "</table>"
+
+            window.setContent(ourClass);
+          }
+        };
+
+        var cmdObj;
+        cmdObj = { "cmd": "BLELIST", "devmac": devmac };
+        var cmdStr = JSON.stringify(cmdObj);
+        xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
+        xmlhttp.setRequestHeader('Content-Type', 'application/json');
+        xmlhttp.send(cmdStr);
+
+      };
+
+      function drawGauge(rssi) {
+
+        var dataRSSI = google.visualization.arrayToDataTable([
+          ['Label', 'Value'],
+          ['RSSI dB', 0],
+        ]);
+
+        var optionsR = {
+          width: 160, height: 120,
+          redFrom: -99, redTo: -90,
+          yellowFrom: -89, yellowTo: -75,
+          greenFrom: -74, greenTo: 0,
+          minorTicks: 5,
+          max: 0,
+          min: -100
+        };
+
+        var RSSIchart = new google.visualization.Gauge(document.getElementById('RSSIchart_div'));
+        dataRSSI.setValue(0, 1, rssi);
+        RSSIchart.draw(dataRSSI, optionsR);
+
+      }
+
+    }
+
+    // viz part
+
+    function drawSeriesChart() {
+
+      readTextFile('./assets/viz-data.json', function (text) {
+        var jObj = JSON.parse(text);
+        var rawData = [];
+
+        // rawData.push(Object.keys(jObj[0]));
+        rawData.push(['id', 'lat', 'lon', 'devmac', 'count']);
+
+        for (var i in jObj) {
+          var devmac = jObj[i].devmac;
+          var count = jObj[i]["COUNT(DISTINCT blemac)"];
+          var lat = jObj[i].dev_lat;
+          var lon = jObj[i].dev_long;
+          rawData.push([null, lat, lon, devmac, count]);
+
+        }
+        var options = {
+          title: 'population density estimated by rssi counts',
+          hAxis: { title: 'latitude' },
+          vAxis: { title: 'longitude' },
+          bubble: { textStyle: { fontSize: 11 } }
+        };
+        console.log(rawData)
+        var data = google.visualization.arrayToDataTable(rawData)
+        var chart = new google.visualization.BubbleChart(document.getElementById('series_chart_div'));
+        chart.draw(data, options);
+      })
+    }
+
+    function hideSidebar() {
+      var sidebar = document.getElementById("mySidebar")
+      if (sidebar.style.display == 'block') {
+        sidebar.style.display = "none";
+      }
+    };
+
+    function showSidebar() {
+      document.getElementById("mySidebar").style.display = "block";
+    }
+
+    function readTextFile(file, callback) {
+      var rawFile = new XMLHttpRequest();
+      rawFile.overrideMimeType("application/json");
+      rawFile.open("GET", file, true);
+      rawFile.onreadystatechange = function () {
+        if (rawFile.readyState === 4 && rawFile.status == "200") {
+          callback(rawFile.responseText);
+        }
+      }
+      rawFile.send(null);
+    }
+
+    google.charts.load('current', { 'packages': ['corechart'] });
+    google.charts.setOnLoadCallback(drawSeriesChart);
+
+  </script>
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBRQQ4iVEx6ijcbOgwtc7Y95i7tMdlqtvw&callback=initMap">
+    </script>
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+</body>
+
+</html>
