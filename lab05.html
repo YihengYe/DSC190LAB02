@@ -118,6 +118,7 @@
         var status = device.status;
         var lon = device.dev_long;
         var lat = device.dev_lat;
+        var ts=device.lastseen;
 
 
         if (lon == null || lat == null) {
@@ -153,7 +154,7 @@
           icon: {
             url: `http://maps.google.com/mapfiles/ms/icons/${iconColor}-dot.png`
           },
-          title: `marker-${devmac}`,
+          title: `marker-${devmac}, groupID-${gid}, status-${status}, lastseen-${ts}`,
           visible: true
         });
 
@@ -163,7 +164,8 @@
         };
 
         var infowindow = new google.maps.InfoWindow({
-          maxWidth: 400
+          maxWidth: 2000,
+          maxHeight: 2000
         });
 
 
@@ -182,20 +184,54 @@
         // marker.addListener('ondblclick', showSidebar);
 
         marker.addListener('mouseover', function () {
-          showSidebar();
           infowindow.open(map, marker);
           // exinfowindow.open(map, marker);
-          updateDevInfo(infowindow, devmac);
           // updateBleInfo(exinfowindow, devmac);
+          drawChart(infowindow, devmac);
         });
 
         marker.addListener('mouseout', function () {
-          infowindow.close();
-          hideSidebar();
         });
       }
-
       function updateDevInfo(window, devmac) {
+
+        // do some AJAX magic to show updated data
+        var xmlhttp = new XMLHttpRequest();
+
+        xmlhttp.onreadystatechange = function () {
+
+        if (this.readyState == 4 && this.status == 200) {
+          var statsObj = JSON.parse(this.responseText);
+          var ourClass = "";
+
+          var devmac = statsObj.devices[0].mac;
+          var gid = statsObj.devices[0].groupID;
+          var lastseen = statsObj.devices[0].lastseen;
+          var status = statsObj.devices[0].status;
+
+          ourClass += "<table class= 'table' id = 'devicesTable'>"
+          ourClass += "<thead>"
+          ourClass += "<tr>"
+          ourClass += "<th>timestamp </th>"
+          ourClass += "<th>devmac </th>"
+          ourClass += "<th>gid </th>"
+          ourClass += "<th>status </th>"
+          ourClass += "</tr>"
+          ourClass += `<tr><td>${lastseen}</td><td>${devmac}</td><td>${gid}</td><td>${status}</td></tr>`
+          ourClass += "</thead>"
+          ourClass += "</table>"
+          window.setContent(ourClass);
+        }
+      };
+
+      var cmdObj = { "cmd": "LIST", "mac": devmac };
+      var cmdStr = JSON.stringify(cmdObj);
+      xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
+      xmlhttp.setRequestHeader('Content-Type', 'application/json');
+      xmlhttp.send(cmdStr);
+      };
+
+      function drawChart(window, devmac) {
 
         // do some AJAX magic to show updated data
         var xmlhttp = new XMLHttpRequest();
@@ -204,29 +240,41 @@
 
           if (this.readyState == 4 && this.status == 200) {
             var statsObj = JSON.parse(this.responseText);
-            var ourClass = "";
+            var lis=[['Hour', 'Temp', 'Hum']];
+            for (var i = 0; i < statsObj.weather.length; i++) {
+              var temp=statsObj.weather[i].avg_temp;
+              var hum=statsObj.weather[i].avg_hum;
+              var hour=statsObj.weather[i].hour;
+              var row=[hour,temp, hum];
+              lis.push(row);
+            };
+            var data=google.visualization.arrayToDataTable(lis);
+            var options = {
+              hAxis: {
+                title: 'Time'
+              },
+              vAxis: {
+                title: 'Mean Value',
+                textStyle: {
+                  color: '#1a237e',
+                  fontSize: 20,
+                  bold: true
+                },
+              },
+              series: {
+                1: {curveType: 'function'}
+              }
+            };
+            var node= document.createElement('div'),
+                chart= new google.visualization.LineChart(node);
+            chart.draw(data, options);
 
-            var devmac = statsObj.devices[0].mac;
-            var gid = statsObj.devices[0].groupID;
-            var lastseen = statsObj.devices[0].lastseen;
-            var status = statsObj.devices[0].status;
 
-            ourClass += "<table class= 'table' id = 'devicesTable'>"
-            ourClass += "<thead>"
-            ourClass += "<tr>"
-            ourClass += "<th>timestamp </th>"
-            ourClass += "<th>devmac </th>"
-            ourClass += "<th>gid </th>"
-            ourClass += "<th>status </th>"
-            ourClass += "</tr>"
-            ourClass += `<tr><td>${lastseen}</td><td>${devmac}</td><td>${gid}</td><td>${status}</td></tr>`
-            ourClass += "</thead>"
-            ourClass += "</table>"
-            window.setContent(ourClass);
+            window.setContent(node);
           }
         };
 
-        var cmdObj = { "cmd": "LIST", "mac": devmac };
+        var cmdObj = { "cmd": "WEATHER", "devmac": devmac };
         var cmdStr = JSON.stringify(cmdObj);
         xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
         xmlhttp.setRequestHeader('Content-Type', 'application/json');
