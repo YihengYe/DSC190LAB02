@@ -464,30 +464,6 @@ def main():
         post_weather(cursor, params)
 
 
-  #   if GET:
-  #       if params['cmd'].value.upper() == 'LIST':
-  #           get_list(params, cursor)
-
-  #       if params['cmd'].value.upper() == 'GROUPS':
-  #           get_groups(params, cursor)
-
-  #       if params['cmd'].value.upper() == 'REG':
-  #           get_reg(params, cursor)
-
-  #       if params['cmd'].value.upper() == 'LOG':
-  #           get_log(params, cursor)
-  #   else:
-  #   	if params['cmd'] == 'LIST':
-  #   		post_list(params, cursor)
-
-		# if params['cmd'] == 'GROUPS':
-  #   		post_groups(params, cursor)
-
-  #       if params['cmd'] == 'REG':
-  #           post_reg(params, cursor)
-
-  #       if params['cmd'] == 'LOGDEV':
-  #           post_logdev(params, cursor)
 
     cursor.close()
     connection.close()
