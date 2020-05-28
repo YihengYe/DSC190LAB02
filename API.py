@@ -280,6 +280,62 @@ def get_log(params, cursor, is_get):
         status="failed"
     format_result(['timestamp', 'status'], [time, status])
 
+    
+
+# def post_reg(params, cursor):
+#     mac = params['mac']
+#     query = "SELECT * FROM iotdb.devices WHERE iotdb.devices.mac = '%s'" % mac
+#     data = execute_sql(query, cursor)
+
+#     # if the device is not registered, insert the new
+#     if len(data) < 1:
+#         divi_sql = "INSERT INTO iotdb.devices(mac, groupID, ip, lastseen) \
+#                     VALUES('{0}', '{1}', '{2}', '{3}')".format(mac, 
+#                     params['gid'], 
+#                     params['ip'],
+#                     time)
+#     # if an existing device, update the origin
+#     else:
+#         divi_sql="UPDATE iotdb.devices \
+#             SET ip='{0}', groupID='{1}', lastseen='{2}' \
+#             WHERE mac='{3}'".format(params['ip'],
+#              params['gid'], 
+#              time,
+#              mac) 
+#     try:
+#         execute_sql(divi_sql, cursor)
+#         connection.commit()
+#         status='successed'
+        
+#     except Exception as err:
+#         status = 'failed'
+#         print(err)
+
+#     format_result(['mac', 'time', 'status'], [mac, time, status])
+
+def post_logdev(params, cursor, is_get):
+    assert is_get == False, 'LOGDEV not supported for GET'
+
+    mac = params['mac']
+   
+    divi_sql = "INSERT INTO iotdb.devlogs(mac, groupID, RSSI, lastseen) \
+                VALUES('{0}', '{1}', '{2}', '{3}')".format(mac, 
+                params['gid'], 
+                params['RSSI'],
+                time)
+    try:
+        execute_sql(divi_sql, cursor)
+        connection.commit()
+        status='successed'
+        
+    except Exception as err:
+        status = 'failed'
+        print(err)
+
+    format_result(['mac', 'time', 'status'], [mac, time, status])
+
+
+
 def forecast(cursor):
     url="http://api.openweathermap.org/data/2.5/weather?zip=92037,us&appid=0354c29c5e773c46d37727c8a0455d58"
     r=requests.get(url)
@@ -344,59 +400,6 @@ def post_weather(cursor,params):
     display_data(data, 'weather')
 
     
-
-# def post_reg(params, cursor):
-#     mac = params['mac']
-#     query = "SELECT * FROM iotdb.devices WHERE iotdb.devices.mac = '%s'" % mac
-#     data = execute_sql(query, cursor)
-
-#     # if the device is not registered, insert the new
-#     if len(data) < 1:
-#         divi_sql = "INSERT INTO iotdb.devices(mac, groupID, ip, lastseen) \
-#                     VALUES('{0}', '{1}', '{2}', '{3}')".format(mac, 
-#                     params['gid'], 
-#                     params['ip'],
-#                     time)
-#     # if an existing device, update the origin
-#     else:
-#         divi_sql="UPDATE iotdb.devices \
-#             SET ip='{0}', groupID='{1}', lastseen='{2}' \
-#             WHERE mac='{3}'".format(params['ip'],
-#              params['gid'], 
-#              time,
-#              mac) 
-#     try:
-#         execute_sql(divi_sql, cursor)
-#         connection.commit()
-#         status='successed'
-        
-#     except Exception as err:
-#         status = 'failed'
-#         print(err)
-
-#     format_result(['mac', 'time', 'status'], [mac, time, status])
-
-def post_logdev(params, cursor, is_get):
-    assert is_get == False, 'LOGDEV not supported for GET'
-
-    mac = params['mac']
-   
-    divi_sql = "INSERT INTO iotdb.devlogs(mac, groupID, RSSI, lastseen) \
-                VALUES('{0}', '{1}', '{2}', '{3}')".format(mac, 
-                params['gid'], 
-                params['RSSI'],
-                time)
-    try:
-        execute_sql(divi_sql, cursor)
-        connection.commit()
-        status='successed'
-        
-    except Exception as err:
-        status = 'failed'
-        print(err)
-
-    format_result(['mac', 'time', 'status'], [mac, time, status])
-
 
 def main():
 
