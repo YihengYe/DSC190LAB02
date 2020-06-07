@@ -240,45 +240,50 @@ def get_log(params, cursor, is_get):
 
     except Exception as err:
         print(err)
-        print(dev_update)
-
-    beacons = params['beacons']
-    sql="INSERT INTO iotdb.blelogs(gid, devmac, blemac, blerssi, timestamp) VALUES "
-    bec_dict=[]
-    for idx, i in enumerate(beacons):
-        if is_get:
-            gid = params['gid'].value
-            blemac = i['mac'].value
-            devmac = params['devmac'].value
-            blerssi = i['rssi'].value
-        else:
-            gid = params['gid']
-            blemac = i['mac']
-            devmac = params['devmac']
-            blerssi = i['rssi']
-        rntime=get_global_time()
-        if blemac in bec_dict:
-            if idx==len(beacons)-1:
-                row ="('{0}', '{1}', '{2}', '{3}','{4}')".format(gid, devmac, blemac, blerssi, rntime)
-                sql=sql+row+';'
-
-        else:
-            row ="('{0}', '{1}', '{2}', '{3}','{4}')".format(gid, devmac, blemac, blerssi, rntime)
-            bec_dict.append(blemac)
-            if idx<len(beacons)-1:
-                sql=sql+row+','
-            else:
-                sql=sql+row+';'
+        print(dev_update  + 'err here')
 
     try:
-        execute_sql(sql, cursor)
-        connection.commit()
+        beacons = params['beacons']
+        sql="INSERT INTO iotdb.blelogs(gid, devmac, blemac, blerssi, timestamp) VALUES "
+        bec_dict=[]
+        for idx, i in enumerate(beacons):
+            if is_get:
+                gid = params['gid'].value
+                blemac = i['mac'].value
+                devmac = params['devmac'].value
+                blerssi = i['rssi'].value
+            else:
+                gid = params['gid']
+                blemac = i['mac']
+                devmac = params['devmac']
+                blerssi = i['rssi']
+            rntime=get_global_time()
+            if blemac in bec_dict:
+                if idx==len(beacons)-1:
+                    row ="('{0}', '{1}', '{2}', '{3}','{4}')".format(gid, devmac, blemac, blerssi, rntime)
+                    sql=sql+row+';'
 
-        status='successed'
+            else:
+                row ="('{0}', '{1}', '{2}', '{3}','{4}')".format(gid, devmac, blemac, blerssi, rntime)
+                bec_dict.append(blemac)
+                if idx<len(beacons)-1:
+                    sql=sql+row+','
+                else:
+                    sql=sql+row+';'
+
+        try:
+            execute_sql(sql, cursor)
+            connection.commit()
+
+            status='successed'
+        except Exception as err:
+            print(err)
+            status="failed"
+        format_result(['timestamp', 'status'], [time, status])
     except Exception as err:
         print(err)
-        status="failed"
-    format_result(['timestamp', 'status'], [time, status])
+        print(dev_update)
+
 
     
 
@@ -366,6 +371,7 @@ def logmc(cursor, params):
     hum=params['hum']
     mac=params['mac']
     devstatus='ACTIVE'
+    
     sql="INSERT INTO iotdb.mcdata(gid, temp, hum, timerstamp, status, mac)\
          VALUES ('{0}','{1}','{2}','{3}','{4}','{5}')".format(gid,temp,hum,time, devstatus, mac)
     try:
@@ -377,6 +383,7 @@ def logmc(cursor, params):
         print(err)
         status="failed"
     format_result(['timestamp', 'status'], [time, status])
+
     dev_update="UPDATE iotdb.devices SET lastseen='{0}' WHERE groupID='{1}' AND mac='{2}'".format(time, gid, mac)
     try:
         execute_sql(dev_update, cursor)
@@ -399,7 +406,7 @@ def post_weather(cursor,params):
         print(err)
     display_data(data, 'weather')
 
-    
+
 
 def main():
 
