@@ -58,6 +58,11 @@
     //      google.charts.setOnLoadCallback(drawGauges);
     var otherMarkers = [];
     markerDict = {};
+    var mymark=[];
+    var choose=[];
+    var norchoose=new Map();
+    var shinmarker=new Map();
+
 
     function toggleMyMarker() {
       var toggleButton = document.getElementById("btn-display");
@@ -83,6 +88,16 @@
       marker.setVisible(true);
     };
 
+    function haversine_distance(mk1, mk2) {
+	      var R = 6371.0710; // Radius of the Earth in Km
+	      var rlat1 = mk1.get('lat') * (Math.PI/180); // Convert degrees to radians
+	      var rlat2 = mk2.get('lat') * (Math.PI/180); // Convert degrees to radians
+	      var difflat = rlat2-rlat1; // Radian difference (latitudes)
+	      var difflon = (mk2.get('lng')-mk1.get('lng')) * (Math.PI/180); // Radian difference (longitudes)
+	      var d = 2 * R * Math.asin(Math.sqrt(Math.sin(difflat/2)*Math.sin(difflat/2)+Math.cos(rlat1)*Math.cos(rlat2)*Math.sin(difflon/2)*Math.sin(difflon/2)));
+	      return d;
+    };
+
     function initMap() {
 
 
@@ -105,9 +120,32 @@
         title: 'UCSD CSE191'
       });
 
-      var globalData;
       placeMarker();
+      var themark=mymark[0];
+      
+      var globalData;
       getGlobalData(); //return globalData
+      var circle = new google.maps.Circle({
+		  map: map,
+		  radius: 1000,    // 1K in metres
+          strokeColor: "#FF0000",
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+		  fillColor: '#800000',
+          fillOpacity: 0.20
+      });
+      
+      circle.bindTo('center', themark, 'position');          
+      circle.setEditable(true);
+      circle.setVisible(true);
+
+      circle.addListener('radius_changed', function() {
+        updateMarkers(circle.getRadius());
+        drawHighChart(globalData);
+		  });
+
+
+
 
       drawHighChart(globalData);
       // place marker by devices
@@ -124,7 +162,7 @@
 
         var cmdObj = { "cmd": "LIST" };
         var cmdStr = JSON.stringify(cmdObj);
-        xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
+        xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", false);
         xmlhttp.setRequestHeader('Content-Type', 'application/json');
         xmlhttp.send(cmdStr);
       };
@@ -179,8 +217,30 @@
 
         if (gid != '3') {
           otherMarkers.push(marker);
+          var limap=new Map();
+          limap.set('lat', lat);
+          limap.set('lng', lon);
+          norchoose.set(devmac, limap);
           // console.log(devmac);
         };
+        if (gid =='3'){
+          if (devmac=='80:7D:3A:BA:E2:14'){
+            mymark.push(marker);
+            mymark.push(devmac);
+            choose.push(devmac);
+            var limap2=new Map();
+            limap2.set('lat', lat);
+            limap2.set('lng', lon);
+            shinmarker.set(devmac, limap2);
+          }else{
+            var limap3=new Map();
+            limap3.set('lat', lat);
+            limap3.set('lng', lon);
+            norchoose.set(devmac, limap3);
+          }
+        };
+
+
 
         var infowindow = new google.maps.InfoWindow({
           width: 8000,
@@ -326,6 +386,20 @@
         xmlhttp.send(cmdStr);
       };
 
+      function updateMarkers(radius){
+        choose=[mymark[1]];
+
+        for(let key of norchoose.keys()){
+          dis=haversine_distance(shinmarker.get(mymark[1]), norchoose.get(key));
+          if (dis*1000<=radius){
+            choose.push(key);
+          }
+
+
+        };
+
+      };
+
       function getGlobalData() {
         var xmlhttp = new XMLHttpRequest();
         xmlhttp.onreadystatechange = function () {
@@ -371,30 +445,33 @@
         var hour = data[i].hour;
         var day = data[i].day;
         var month = data[i].month;
+        var themac=data[i].mac;
 
 
         var timestamp = Date.UTC(2020, parseInt(month) - 1, parseInt(day), parseInt(hour));
         var numstamp=parseInt(timestamp);
         // var tempRow = [timestamp, parseFloat(temp)];
         // var humRow = [parseFloat(hum)];
-        if (check.has(numstamp)){
-          var map3=check.get(numstamp);
-          var temp3=map3.get('temp');
-          temp3.push(temp);
-          var hum3=map3.get('hum');
-          hum3.push(hum);
+        if(choose.includes(themac)){
+          if (check.has(numstamp)){
+            var map3=check.get(numstamp);
+            var temp3=map3.get('temp');
+            temp3.push(temp);
+            var hum3=map3.get('hum');
+            hum3.push(hum);
 
-        }else{
-          var map2=new Map();
-          var temp2=[];
-          var hum2=[];
-          temp2.push(temp);
-          hum2.push(hum);
-          map2.set('temp', temp2);
-          map2.set('hum', hum2);
-          check.set(numstamp, map2);
+          }else{
+            var map2=new Map();
+            var temp2=[];
+            var hum2=[];
+            temp2.push(temp);
+            hum2.push(hum);
+            map2.set('temp', temp2);
+            map2.set('hum', hum2);
+            check.set(numstamp, map2);
 
-        }
+          }
+        };
 
       };
       var temperature_avg=[];
@@ -418,9 +495,18 @@
       var chartDiv = document.createElement('div');
       chartDiv.className = 'chart';
       chartDiv.style.width = '100%';
-
-      document.getElementById('w3-sidebar').appendChild(chartDiv);
-
+      var x=document.getElementById('w3-sidebar').children;
+      var hs=true;
+      for (var j=0; j<x.length; j++){
+        if (x[j].className=='chart'){
+          chartDiv=x[j];
+          hs=false;
+        }
+      };
+      if (hs){
+        document.getElementById('w3-sidebar').appendChild(chartDiv);
+      };
+      
       Highcharts.stockChart(chartDiv, {
 
         rangeSelector: {
