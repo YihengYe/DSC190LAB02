@@ -7,6 +7,13 @@
   <meta name="viewport" content="initial-scale=1.0">
   <meta charset="utf-8">
   <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+
+<script src="https://code.highcharts.com/highcharts-3d.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<script src="https://code.highcharts.com/modules/accessibility.js"></script>
+
+
   <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
   <script src="https://code.highcharts.com/stock/highstock.js"></script>
   <script src="https://code.highcharts.com/stock/modules/data.js"></script>
@@ -302,8 +309,8 @@
               var hum = statsObj.weather[i].avg_hum;
               var day = statsObj.weather[i].day;
               var month = statsObj.weather[i].month;
-              
-              var timestamp = '2020-'+ month + '-' + day;
+
+              var timestamp = '2020-' + month + '-' + day;
 
 
               ourClass += `<tr><td>${timestamp}</td><td>${temp}</td><td>${hum}</td></tr>`
@@ -326,78 +333,78 @@
 
       };
 
-      function drawTempHumChart(window, devmac) {
+      // function drawTempHumChart(window, devmac) {
 
-        // do some AJAX magic to show updated data
-        var xmlhttp = new XMLHttpRequest();
+      //   // do some AJAX magic to show updated data
+      //   var xmlhttp = new XMLHttpRequest();
 
-        xmlhttp.onreadystatechange = function () {
+      //   xmlhttp.onreadystatechange = function () {
 
-          if (this.readyState == 4 && this.status == 200) {
-            var statsObj = JSON.parse(this.responseText);
-            var tempList = [['Hour', 'Temp', 'Hum']];
-            // var humList = [['Hour', 'Hum']];;
-            for (var i = 0; i < statsObj.weather.length; i++) {
-              var temp = statsObj.weather[i].avg_temp;
-              var hum = statsObj.weather[i].avg_hum;
-              var hour = statsObj.weather[i].hour;
-              var day = statsObj.weather[i].day;
-              var month = statsObj.weather[i].month;
+      //     if (this.readyState == 4 && this.status == 200) {
+      //       var statsObj = JSON.parse(this.responseText);
+      //       var tempList = [['Hour', 'Temp', 'Hum']];
+      //       // var humList = [['Hour', 'Hum']];;
+      //       for (var i = 0; i < statsObj.weather.length; i++) {
+      //         var temp = statsObj.weather[i].avg_temp;
+      //         var hum = statsObj.weather[i].avg_hum;
+      //         var hour = statsObj.weather[i].hour;
+      //         var day = statsObj.weather[i].day;
+      //         var month = statsObj.weather[i].month;
 
-              var timestamp = Date.UTC(2020, parseInt(month), parseInt(day), parseInt(hour));
+      //         var timestamp = Date.UTC(2020, parseInt(month), parseInt(day), parseInt(hour));
 
-              var tempRow = [timestamp, temp, hum];
-              // var humRow = [hour, hum];
-              tempList.push(tempRow);
-              // humList.push(humRow);
-            };
+      //         var tempRow = [timestamp, temp, hum];
+      //         // var humRow = [hour, hum];
+      //         tempList.push(tempRow);
+      //         // humList.push(humRow);
+      //       };
 
-            // var tempData = google.visualization.arrayToDataTable(tempList);
+      //       // var tempData = google.visualization.arrayToDataTable(tempList);
 
-            // var tempOptions = {
-            //   title: 'Leads',
-            //   hAxis: { showTextEvery: 5 },
-            //   vAxes: {
-            //     0: {
-            //       viewWindowMode: 'explicit',
-            //       viewWindow: {
-            //         max: '100%',
-            //         min: '50%'
-            //       },
-            //       gridlines: { color: 'transparent' },
-            //     },
-            //     1: {
-            //       gridlines: { color: 'transparent' },
-            //       format: "#%"
-            //     },
-            //   },
-            //   series: {
-            //     0: { targetAxisIndex: 0 },
-            //     1: { targetAxisIndex: 1 },
-            //   },
-            //   colors: ["red", "green"],
-            // };
+      //       // var tempOptions = {
+      //       //   title: 'Leads',
+      //       //   hAxis: { showTextEvery: 5 },
+      //       //   vAxes: {
+      //       //     0: {
+      //       //       viewWindowMode: 'explicit',
+      //       //       viewWindow: {
+      //       //         max: '100%',
+      //       //         min: '50%'
+      //       //       },
+      //       //       gridlines: { color: 'transparent' },
+      //       //     },
+      //       //     1: {
+      //       //       gridlines: { color: 'transparent' },
+      //       //       format: "#%"
+      //       //     },
+      //       //   },
+      //       //   series: {
+      //       //     0: { targetAxisIndex: 0 },
+      //       //     1: { targetAxisIndex: 1 },
+      //       //   },
+      //       //   colors: ["red", "green"],
+      //       // };
 
-            // var node = document.createElement('div');
-            // // var humNode = document.createElement('div');
+      //       // var node = document.createElement('div');
+      //       // // var humNode = document.createElement('div');
 
-            // var tempChart = new google.visualization.LineChart(node);
-            // // var humChart = new google.visualization.LineChart(node);
+      //       // var tempChart = new google.visualization.LineChart(node);
+      //       // // var humChart = new google.visualization.LineChart(node);
 
-            // tempChart.draw(tempData, tempOptions);
-            // // tempChart.draw(humData, humOptions);git
+      //       // tempChart.draw(tempData, tempOptions);
+      //       // // tempChart.draw(humData, humOptions);git
 
-            // window.setContent(node);
-            // window.addContent(humNode);
-          }
-        };
+      //       // window.setContent(node);
+      //       // window.addContent(humNode);
+      //     }
+      //   };
 
-        var cmdObj = { "cmd": "WEATHER", "devmac": devmac };
-        var cmdStr = JSON.stringify(cmdObj);
-        xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
-        xmlhttp.setRequestHeader('Content-Type', 'application/json');
-        xmlhttp.send(cmdStr);
-      };
+      //   var cmdObj = { "cmd": "WEATHER", "devmac": devmac };
+      //   var cmdStr = JSON.stringify(cmdObj);
+      //   xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
+      //   xmlhttp.setRequestHeader('Content-Type', 'application/json');
+      //   xmlhttp.send(cmdStr);
+      // };
 
       function updateMarkers(radius) {
         choose = [mymark[1]];
@@ -449,6 +456,22 @@
         xmlhttp.send(cmdStr);
       };
     };
+
+    // function drawScatterPlot() {
+    //   var xmlhttp = new XMLHttpRequest();
+    //   xmlhttp.onreadystatechange = function () {
+    //     if (this.readyState == 4 && this.status == 200) {
+    //       var statsObj = JSON.parse(this.responseText);
+    //       console.log(statsObj)
+    //     }
+    //   }
+    //   var cmdObj;
+    //   cmdObj = { "cmd": "WEATHER"};
+    //   var cmdStr = JSON.stringify(cmdObj);
+    //   xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
+    //   xmlhttp.setRequestHeader('Content-Type', 'application/json');
+    //   xmlhttp.send(cmdStr);
+    // };
 
     function drawHighChart(data) {
       var check = new Map();
@@ -504,14 +527,13 @@
       humidity_avg.sort(function (a, b) { return a[0] - b[0]; });
 
 
-
       var chartDiv = document.createElement('div');
-      chartDiv.className = 'chart';
+      chartDiv.className = 'line';
       chartDiv.style.width = '100%';
       var x = document.getElementById('w3-sidebar').children;
       var hs = true;
       for (var j = 0; j < x.length; j++) {
-        if (x[j].className == 'chart') {
+        if (x[j].className == 'line') {
           chartDiv = x[j];
           hs = false;
         }
@@ -581,7 +603,115 @@
         }],
 
       });
-    }
+
+      var chartDiv2 = document.createElement('div');
+      chartDiv2.className = 'scatter';
+      chartDiv2.style.width = '100%';
+      var x2 = document.getElementById('w3-sidebar').children;
+      var hs2 = true;
+      for (var j = 0; j < x2.length; j++) {
+        if (x2[j].className == 'scatter') {
+          chartDiv2 = x2[j];
+          hs2 = false;
+        }
+      };
+      if (hs2) {
+        document.getElementById('w3-sidebar').appendChild(chartDiv2);
+      };
+
+
+
+      //format temp/hum
+      var scatterClass1 = [];
+      var scatterClass2 = [];
+
+      for (var k = 0; k < temperature_avg.length; k++) {
+        var windSpeed = -0.3539 * temperature_avg[k][1] - 0.0713 * humidity_avg[k][1] + 19.6735;
+        var toPush = [temperature_avg[k][1], humidity_avg[k][1], windSpeed]
+        scatterClass1.push(toPush)
+      };
+
+
+      Highcharts.chart(chartDiv2, {
+        chart: {
+          type: 'scatter3d',
+          zoomType: 'xy'
+        },
+        title: {
+          text: 'AVG Temperature and Huamidity Scatter plot (agg. by hours in last 5 days)'
+        },
+
+        xAxis: {
+          min: 15,
+          max: 35,
+          title: {
+            enabled: true,
+            text: 'Temp (C)'
+          },
+          startOnTick: true,
+          endOnTick: true,
+          showLastLabel: true
+        },
+        yAxis: {
+          min: 35,
+          max: 65,
+          title: {
+            text: 'Hum (%)'
+          }
+        },
+        zAxis: {
+          min: 0,
+          max: 20,
+          showFirstLabel: false
+        },
+        legend: {
+          layout: 'vertical',
+          align: 'left',
+          verticalAlign: 'top',
+          x: 100,
+          y: 70,
+          floating: true,
+          backgroundColor: Highcharts.defaultOptions.chart.backgroundColor,
+          borderWidth: 1
+        },
+        plotOptions: {
+          scatter: {
+            marker: {
+              radius: 5,
+              states: {
+                hover: {
+                  enabled: true,
+                  lineColor: 'rgb(100,100,100)'
+                }
+              }
+            },
+            states: {
+              hover: {
+                marker: {
+                  enabled: false
+                }
+              }
+            },
+            tooltip: {
+              headerFormat: '<b>{series.name}</b><br>',
+              pointFormat: '{point.x} C, {point.y} %'
+            }
+          }
+        },
+        series: [{
+          name: 'cloudy',
+          color: 'rgba(223, 83, 83, .5)',
+          data: scatterClass1,
+
+        }, {
+          name: 'clear',
+          color: 'rgba(119, 152, 191, .5)',
+          data: [[]]
+        }]
+      });
+
+
+    };
 
     function drawBubbleChart() {
 
