@@ -405,8 +405,8 @@ def post_weather(cursor,params):
         sql="SELECT avg(temp) as avg_temp, avg(hum) as avg_hum, mac, HOUR(timerstamp) as hour, DAY(timerstamp) as day, MONTH(timerstamp) as month FROM iotdb.mcdata \
             WHERE NOW()<=DATE_ADD(timerstamp, INTERVAL 120 HOUR) GROUP BY hour, day, month, mac"
     else:
-         sql="SELECT avg(temp) as avg_temp, avg(hum) as avg_hum, HOUR(timerstamp) as hour, DAY(timerstamp) as day, MONTH(timerstamp) as month FROM iotdb.mcdata \
-            WHERE mac='{0}' AND NOW()<=DATE_ADD(timerstamp, INTERVAL 120 HOUR) GROUP BY hour, day, month".format(mac)
+         sql="SELECT avg(temp) as avg_temp, avg(hum) as avg_hum, DAY(timerstamp) as day, MONTH(timerstamp) as month FROM iotdb.mcdata \
+            WHERE mac='{0}' AND NOW()<=DATE_ADD(timerstamp, INTERVAL 120 HOUR) GROUP BY day, month".format(mac)
 
 
     try:
