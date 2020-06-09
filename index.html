@@ -29,13 +29,16 @@
     <button id="btn-display" onclick="toggleMyMarker()"
       style="position:fixed; margin-left: 45%; margin-right: 45%; z-index: 10;">Hide Other Markers</button>
   </div>
-  <div id="mySidebar" style = "display: none;">
+  <div id="mySidebar" style="display: none;">
+    <button id='btn-hide' onclick="hideSidebar()"
+      style="position:fixed;margin-left: 80%; margin-right: 10%; z-index: 10;">Close Sidebar</button>
     <div class="w3-sidebar w3-bar-block w3-collapse w3-card w3-animate-right" style="width:45%; right:0;">
       <div id="series_chart_div" style="width: 100%; height: 100%"></div>
+
     </div>
 
   </div>
-  <div id="map" ></div>
+  <div id="map"></div>
 
   <script>
 
@@ -91,6 +94,7 @@
         title: 'UCSD CSE191'
       });
 
+
       placeMarker();
 
       // place marker by devices
@@ -118,7 +122,7 @@
         var status = device.status;
         var lon = device.dev_long;
         var lat = device.dev_lat;
-        var ts=device.lastseen;
+        var ts = device.lastseen;
 
 
         if (lon == null || lat == null) {
@@ -164,8 +168,8 @@
         };
 
         var infowindow = new google.maps.InfoWindow({
-          maxWidth: 2000,
-          maxHeight: 2000
+          width: 8000,
+          height: 8000
         });
 
 
@@ -176,9 +180,11 @@
         });
 
         marker.addListener('click', function () {
-          infowindow.open(map, marker);
+          showSidebar();
+          // infowindow.open(map, marker);
           /* initalize the infowindow and then do updates.. */
-          updateBleInfo(infowindow, devmac);
+          // updateBleInfo(infowindow, devmac);
+
         });
 
         // marker.addListener('ondblclick', showSidebar);
@@ -186,52 +192,15 @@
         marker.addListener('mouseover', function () {
           infowindow.open(map, marker);
           // exinfowindow.open(map, marker);
-          // updateBleInfo(exinfowindow, devmac);
-          drawChart(infowindow, devmac);
+          drawTempHumChart(infowindow, devmac);
         });
 
         marker.addListener('mouseout', function () {
+          // infowindow.close();
         });
       }
+
       function updateDevInfo(window, devmac) {
-
-        // do some AJAX magic to show updated data
-        var xmlhttp = new XMLHttpRequest();
-
-        xmlhttp.onreadystatechange = function () {
-
-        if (this.readyState == 4 && this.status == 200) {
-          var statsObj = JSON.parse(this.responseText);
-          var ourClass = "";
-
-          var devmac = statsObj.devices[0].mac;
-          var gid = statsObj.devices[0].groupID;
-          var lastseen = statsObj.devices[0].lastseen;
-          var status = statsObj.devices[0].status;
-
-          ourClass += "<table class= 'table' id = 'devicesTable'>"
-          ourClass += "<thead>"
-          ourClass += "<tr>"
-          ourClass += "<th>timestamp </th>"
-          ourClass += "<th>devmac </th>"
-          ourClass += "<th>gid </th>"
-          ourClass += "<th>status </th>"
-          ourClass += "</tr>"
-          ourClass += `<tr><td>${lastseen}</td><td>${devmac}</td><td>${gid}</td><td>${status}</td></tr>`
-          ourClass += "</thead>"
-          ourClass += "</table>"
-          window.setContent(ourClass);
-        }
-      };
-
-      var cmdObj = { "cmd": "LIST", "mac": devmac };
-      var cmdStr = JSON.stringify(cmdObj);
-      xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
-      xmlhttp.setRequestHeader('Content-Type', 'application/json');
-      xmlhttp.send(cmdStr);
-      };
-
-      function drawChart(window, devmac) {
 
         // do some AJAX magic to show updated data
         var xmlhttp = new XMLHttpRequest();
@@ -240,37 +209,97 @@
 
           if (this.readyState == 4 && this.status == 200) {
             var statsObj = JSON.parse(this.responseText);
-            var lis=[['Hour', 'Temp', 'Hum']];
+            var ourClass = "";
+
+            var devmac = statsObj.devices[0].mac;
+            var gid = statsObj.devices[0].groupID;
+            var lastseen = statsObj.devices[0].lastseen;
+            var status = statsObj.devices[0].status;
+
+            ourClass += "<table class= 'table' id = 'devicesTable'>"
+            ourClass += "<thead>"
+            ourClass += "<tr>"
+            ourClass += "<th>timestamp </th>"
+            ourClass += "<th>devmac </th>"
+            ourClass += "<th>gid </th>"
+            ourClass += "<th>status </th>"
+            ourClass += "</tr>"
+            ourClass += `<tr><td>${lastseen}</td><td>${devmac}</td><td>${gid}</td><td>${status}</td></tr>`
+            ourClass += "</thead>"
+            ourClass += "</table>"
+            window.setContent(ourClass);
+          }
+        };
+
+        var cmdObj = { "cmd": "LIST", "mac": devmac };
+        var cmdStr = JSON.stringify(cmdObj);
+        xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
+        xmlhttp.setRequestHeader('Content-Type', 'application/json');
+        xmlhttp.send(cmdStr);
+      };
+
+      function drawTempHumChart(window, devmac) {
+
+        // do some AJAX magic to show updated data
+        var xmlhttp = new XMLHttpRequest();
+
+        xmlhttp.onreadystatechange = function () {
+
+          if (this.readyState == 4 && this.status == 200) {
+            var statsObj = JSON.parse(this.responseText);
+            var tempList = [['Hour', 'Temp', 'Hum']];
+            // var humList = [['Hour', 'Hum']];;
             for (var i = 0; i < statsObj.weather.length; i++) {
-              var temp=statsObj.weather[i].avg_temp;
-              var hum=statsObj.weather[i].avg_hum;
-              var hour=statsObj.weather[i].hour;
-              var row=[hour,temp, hum];
-              lis.push(row);
+              var temp = statsObj.weather[i].avg_temp;
+              var hum = statsObj.weather[i].avg_hum;
+              var hour = statsObj.weather[i].hour;
+
+              var tempRow = [hour, temp, hum];
+              // var humRow = [hour, hum];
+              tempList.push(tempRow);
+              // humList.push(humRow);
             };
-            var data=google.visualization.arrayToDataTable(lis);
-            var options = {
-              hAxis: {
-                title: 'Time'
-              },
-              vAxis: {
-                title: 'Mean Value',
-                textStyle: {
-                  color: '#1a237e',
-                  fontSize: 20,
-                  bold: true
+            var tempData = google.visualization.arrayToDataTable(tempList);
+            // var humData = google.visualization.arrayToDataTable(humList);
+
+            var tempOptions = {
+              title: 'Leads',
+              hAxis: { showTextEvery: 5 },
+              vAxes: {
+                0: {
+                  viewWindowMode: 'explicit',
+                  viewWindow: {
+                    max: '100%',
+                    min: '50%'
+                  },
+                  gridlines: { color: 'transparent' },
+                },
+                1: {
+                  gridlines: { color: 'transparent' },
+                  format: "#%"
                 },
               },
               series: {
-                1: {curveType: 'function'}
-              }
+                0: { targetAxisIndex: 0 },
+                1: { targetAxisIndex: 1 },
+              },
+              colors: ["red", "green"],
             };
-            var node= document.createElement('div'),
-                chart= new google.visualization.LineChart(node);
-            chart.draw(data, options);
+            // var humOptions = {
+
+            // }
 
 
+            var node = document.createElement('div');
+            // var humNode = document.createElement('div');
+
+            var tempChart = new google.visualization.LineChart(node);
+            // var humChart = new google.visualization.LineChart(node);
+
+            tempChart.draw(tempData, tempOptions);
+            // tempChart.draw(humData, humOptions);
             window.setContent(node);
+            // window.addContent(humNode);
           }
         };
 
