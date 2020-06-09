@@ -7,18 +7,15 @@
   <meta name="viewport" content="initial-scale=1.0">
   <meta charset="utf-8">
   <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
-  <script src="https://code.highcharts.com/highcharts.js"></script>
-  <script src="https://code.highcharts.com/modules/networkgraph.js"></script>
-  <script src="https://code.highcharts.com/modules/exporting.js"></script>
-  <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
-  <script src="https://code.highcharts.com/highcharts-more.js"></script>
-  <script src="https://code.highcharts.com/modules/exporting.js"></script>
-  <script src="https://code.highcharts.com/modules/export-data.js"></script>
-  <script src="https://code.highcharts.com/modules/timeline.js"></script>
-  <script src="https://www.amcharts.com/lib/4/core.js"></script>
-  <script src="https://www.amcharts.com/lib/4/charts.js"></script>
-  <script src="https://www.amcharts.com/lib/4/themes/animated.js"></script>
-  <script src="https://www.amcharts.com/lib/4/plugins/wordCloud.js"></script>
+  <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+  <script src="https://code.highcharts.com/stock/highstock.js"></script>
+  <script src="https://code.highcharts.com/stock/modules/data.js"></script>
+  <script src="https://code.highcharts.com/stock/highcharts-more.js"></script>
+  <script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+  <script src="https://code.highcharts.com/stock/modules/export-data.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.13/moment-timezone-with-data-2012-2022.min.js"></script>
   <style>
     /* Always set the map height explicitly to define the size of the div
        * element that contains the map. */
@@ -44,7 +41,8 @@
   <div id="mySidebar" style="display: none;">
     <button id='btn-hide' onclick="hideSidebar()"
       style="position:fixed;margin-left: 80%; margin-right: 10%; z-index: 10;">Close Sidebar</button>
-    <div class="w3-sidebar w3-bar-block w3-collapse w3-card w3-animate-right" style="width:45%; right:0;">
+    <div id = 'w3-sidebar' class="w3-sidebar w3-bar-block w3-collapse w3-card w3-animate-right" style="width:45%; right:0;">
+     
       <div id="series_chart_div" style="width: 100%; height: 100%"></div>
 
     </div>
@@ -107,7 +105,8 @@
 
 
       placeMarker();
-      getData();
+      getGlobalData(); //return globalData
+      drawHighChart('', '')
       // place marker by devices
 
       function placeMarker() {
@@ -310,7 +309,7 @@
             // tempChart.draw(tempData, tempOptions);
             // // tempChart.draw(humData, humOptions);git
 
-            window.setContent(node);
+            // window.setContent(node);
             // window.addContent(humNode);
           }
         };
@@ -336,75 +335,12 @@
         };
 
         var jObj;
-        jObj = { cmd: "WEATHER"};
+        jObj = { cmd: "WEATHER" };
         var cmdStr = JSON.stringify(jObj);
         xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
         xmlhttp.setRequestHeader('Content-Type', 'application/json');
         xmlhttp.send(cmdStr);
       };
-
-      function drawHighChart(humData, tempData) {
-       
-        Highcharts.stockChart('title', {
-
-          rangeSelector: {
-            selected: 2
-          },
-
-          yAxis: [{ // Primary yAxis
-            labels: {
-              format: '{value}°C',
-              style: {
-                color: Highcharts.getOptions().colors[0]
-              }
-            },
-            title: {
-              text: 'Temperature',
-              style: {
-                color: Highcharts.getOptions().colors[0]
-              }
-            },
-            opposite: true
-
-          }, { // Secondary yAxis
-            gridLineWidth: 0,
-            title: {
-              text: 'Humidity',
-              style: {
-                color: Highcharts.getOptions().colors[1]
-              }
-            },
-            labels: {
-              format: '{value} %',
-              style: {
-                color: Highcharts.getOptions().colors[1]
-              }
-            },
-            opposite: false
-
-          }],
-
-          title: {
-            text: 'Average Temperature and Humidity variation'
-          },
-
-          series: [{
-            name: 'Temperatures',
-            data: tempData,
-            tooltip: {
-              valueSuffix: '°C'
-            },
-          }, {
-            name: 'Humidity',
-            data: humData,
-            tooltip: {
-              valueSuffix: '%'
-            },
-            yAxis: 1,
-          }],
-
-        });
-      }
 
       function drawGauge(rssi) {
 
@@ -429,6 +365,76 @@
 
       }
 
+    }
+    function drawHighChart(humData, tempData) {
+      var chartDiv = document.createElement('div');
+      chartDiv.className = 'chart';
+      chartDiv.style.width = '100%';
+      // chartDiv.setAttribute('z-index', '100%');
+
+      document.getElementById('w3-sidebar').appendChild(chartDiv);
+
+      Highcharts.stockChart(chartDiv, {
+
+        rangeSelector: {
+          selected: 2
+        },
+        xAxis: {
+          type: 'datetime'
+        },
+        yAxis: [{ // Primary yAxis
+          labels: {
+            format: '{value}°C',
+            style: {
+              color: Highcharts.getOptions().colors[0]
+            }
+          },
+          title: {
+            text: 'Temperature',
+            style: {
+              color: Highcharts.getOptions().colors[0]
+            }
+          },
+          opposite: true
+
+        }, { // Secondary yAxis
+          gridLineWidth: 0,
+          title: {
+            text: 'Humidity',
+            style: {
+              color: Highcharts.getOptions().colors[1]
+            }
+          },
+          labels: {
+            format: '{value} %',
+            style: {
+              color: Highcharts.getOptions().colors[1]
+            }
+          },
+          opposite: false
+
+        }],
+
+        title: {
+          text: 'Average Temperature and Humidity variation'
+        },
+
+        series: [{
+          name: 'Temperatures',
+          data: [[1, 2], [1, 2]],
+          tooltip: {
+            valueSuffix: '°C'
+          },
+        }, {
+          name: 'Humidity',
+          data: [[1, 2], [1, 2]],
+          tooltip: {
+            valueSuffix: '%'
+          },
+          yAxis: 1,
+        }],
+
+      });
     }
 
     function drawBubbleChart() {
@@ -460,7 +466,7 @@
         chart.draw(data, options);
 
 
-        
+
       })
     }
 
