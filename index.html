@@ -212,43 +212,43 @@
         });
       }
 
-      function updateDevInfo(window, devmac) {
+      // function updateDevInfo(window, devmac) {
 
-        // do some AJAX magic to show updated data
-        var xmlhttp = new XMLHttpRequest();
+      //   // do some AJAX magic to show updated data
+      //   var xmlhttp = new XMLHttpRequest();
 
-        xmlhttp.onreadystatechange = function () {
+      //   xmlhttp.onreadystatechange = function () {
 
-          if (this.readyState == 4 && this.status == 200) {
-            var statsObj = JSON.parse(this.responseText);
-            var ourClass = "";
+      //     if (this.readyState == 4 && this.status == 200) {
+      //       var statsObj = JSON.parse(this.responseText);
+      //       var ourClass = "";
 
-            var devmac = statsObj.devices[0].mac;
-            var gid = statsObj.devices[0].groupID;
-            var lastseen = statsObj.devices[0].lastseen;
-            var status = statsObj.devices[0].status;
+      //       var devmac = statsObj.devices[0].mac;
+      //       var gid = statsObj.devices[0].groupID;
+      //       var lastseen = statsObj.devices[0].lastseen;
+      //       var status = statsObj.devices[0].status;
 
-            ourClass += "<table class= 'table' id = 'devicesTable'>"
-            ourClass += "<thead>"
-            ourClass += "<tr>"
-            ourClass += "<th>timestamp </th>"
-            ourClass += "<th>devmac </th>"
-            ourClass += "<th>gid </th>"
-            ourClass += "<th>status </th>"
-            ourClass += "</tr>"
-            ourClass += `<tr><td>${lastseen}</td><td>${devmac}</td><td>${gid}</td><td>${status}</td></tr>`
-            ourClass += "</thead>"
-            ourClass += "</table>"
-            window.setContent(ourClass);
-          }
-        };
+      //       ourClass += "<table class= 'table' id = 'devicesTable'>"
+      //       ourClass += "<thead>"
+      //       ourClass += "<tr>"
+      //       ourClass += "<th>timestamp </th>"
+      //       ourClass += "<th>devmac </th>"
+      //       ourClass += "<th>gid </th>"
+      //       ourClass += "<th>status </th>"
+      //       ourClass += "</tr>"
+      //       ourClass += `<tr><td>${lastseen}</td><td>${devmac}</td><td>${gid}</td><td>${status}</td></tr>`
+      //       ourClass += "</thead>"
+      //       ourClass += "</table>"
+      //       window.setContent(ourClass);
+      //     }
+      //   };
 
-        var cmdObj = { "cmd": "LIST", "mac": devmac };
-        var cmdStr = JSON.stringify(cmdObj);
-        xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
-        xmlhttp.setRequestHeader('Content-Type', 'application/json');
-        xmlhttp.send(cmdStr);
-      };
+      //   var cmdObj = { "cmd": "LIST", "mac": devmac };
+      //   var cmdStr = JSON.stringify(cmdObj);
+      //   xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
+      //   xmlhttp.setRequestHeader('Content-Type', 'application/json');
+      //   xmlhttp.send(cmdStr);
+      // };
 
       function drawTempHumChart(window, devmac) {
 
@@ -322,87 +322,26 @@
         xmlhttp.send(cmdStr);
       };
 
-      function updateBleInfo(window, devmac) {
+      function getData() {
         var xmlhttp = new XMLHttpRequest();
-
         xmlhttp.onreadystatechange = function () {
           if (this.readyState == 4 && this.status == 200) {
-            var ourClass = "";
-
-            ourClass += "<table class= 'table' id = 'blelogsTable'>";
-            ourClass += "<thead>";
-            ourClass += "<tr>";
-            ourClass += "<th>timestamp </th>";
-            ourClass += "<th>devmac </th>";
-            ourClass += "<th>blemac </th>";
-            ourClass += "<th>blerssi </th>";
-            ourClass += "<th>status </th>";
-            ourClass += "</tr>";
-
 
             var statsObj = JSON.parse(this.responseText);
 
-
-            for (var i = 0; i < statsObj.blelogs.length; i++) {
-              var bleColor;
-
-              var ts = statsObj.blelogs[i].timestamp;
-              var devmac = statsObj.blelogs[i].devmac;
-              var blemac = statsObj.blelogs[i].blemac;
-              var blerssi = statsObj.blelogs[i].blerssi;
-              var date = new Date(ts);
-              var diff_in_ms = Date.now() - Date.parse(ts);
-              var diff_in_ms = Math.abs(diff_in_ms);
-              var status;
-
-              var tens = 10 * 1000;
-              var temin = 10 * 60 * 1000;
-              if (diff_in_ms < tens) {
-                status = 'OK';
-              }
-              else if (diff_in_ms < temin) {
-                status = 'WARNING';
-              }
-              else {
-                status = 'TIMEOUT';
-              }
-
-              if (status == 'OK') {
-                var color = 'green';
-                status = "<p style='color:" + color + ";'>" + status + "</p>";
-              }
-              else if (status == 'WARNING') {
-                var color = 'yellow';
-                status = "<p style='color:" + color + ";'>" + status + "</p>";
-
-
-              }
-              else {
-                var color = 'red';
-                status = "<p style='color:" + color + ";'>" + status + "</p>";
-              }
-
-              //ourClass = group_name+" ("+gid+")<br> MAC ("+mac+")<br>Time: "+ts;
-              ourClass += `<tr><td>${ts}</td><td>${devmac}</td><td>${blemac}</td><td>${blerssi}</td><td>${status}</td></tr>`
-
-
-              // ourClass = `place holder for now; use html with attrs to highlight status; test date ${date}`
-              /* fix window; generalize */
-            }
-
-            ourClass += "</thead>"
-            ourClass += "</table>"
-
-            window.setContent(ourClass);
+            data = statsObj.weather;
+            drawCharts(data);
+            ocean();
           }
         };
 
-        var cmdObj;
-        cmdObj = { "cmd": "BLELIST", "devmac": devmac };
-        var cmdStr = JSON.stringify(cmdObj);
-        xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
+        var jObj;
+        jObj = { cmd: "VIZTEMP" };
+
+        var jStr = JSON.stringify(jObj);
+        xmlhttp.open("POST", urlStr, true);
         xmlhttp.setRequestHeader('Content-Type', 'application/json');
-        xmlhttp.send(cmdStr);
+        xmlhttp.send(jStr);
 
       };
 
@@ -430,8 +369,6 @@
       }
 
     }
-
-    // viz part
 
     function drawSeriesChart() {
 
