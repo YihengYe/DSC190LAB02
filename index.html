@@ -41,8 +41,9 @@
   <div id="mySidebar" style="display: none;">
     <button id='btn-hide' onclick="hideSidebar()"
       style="position:fixed;margin-left: 80%; margin-right: 10%; z-index: 10;">Close Sidebar</button>
-    <div id = 'w3-sidebar' class="w3-sidebar w3-bar-block w3-collapse w3-card w3-animate-right" style="width:45%; right:0;">
-     
+    <div id='w3-sidebar' class="w3-sidebar w3-bar-block w3-collapse w3-card w3-animate-right"
+      style="width:45%; right:0;">
+
       <div id="series_chart_div" style="width: 100%;"></div>
 
     </div>
@@ -56,6 +57,7 @@
     google.charts.load('current', { 'packages': ['gauge'] });
     //      google.charts.setOnLoadCallback(drawGauges);
     var otherMarkers = [];
+    markerDict = {};
 
     function toggleMyMarker() {
       var toggleButton = document.getElementById("btn-display");
@@ -103,10 +105,11 @@
         title: 'UCSD CSE191'
       });
 
-
+      var globalData;
       placeMarker();
-      getGlobalData(); //return globalData
-      drawHighChart('', '')
+      getGlobalData(globalData); //return globalData
+
+      drawHighChart(globalData);
       // place marker by devices
 
       function placeMarker() {
@@ -171,6 +174,8 @@
           title: `marker-${devmac}, groupID-${gid}, status-${status}, lastseen-${ts}`,
           visible: true
         });
+
+        markerDict[devmac] = [marker];
 
         if (gid != '3') {
           otherMarkers.push(marker);
@@ -321,7 +326,7 @@
         xmlhttp.send(cmdStr);
       };
 
-      function getGlobalData() {
+      function getGlobalData(globalData) {
         var xmlhttp = new XMLHttpRequest();
         xmlhttp.onreadystatechange = function () {
           if (this.readyState == 4 && this.status == 200) {
@@ -330,6 +335,23 @@
 
             globalData = statsObj.weather;
             console.log(globalData)
+            // for (var i = 0; i < globalData.length; i++) {
+            //   var temp = globalData[i].avg_temp;
+            //   var hum = globalData[i].avg_hum;
+            //   var hour = globalData[i].hour;
+            //   var day = globalData[i].day;
+            //   var month = globalData[i].month;
+
+
+            //   var timestamp = Date.UTC(2020, parseInt(month), parseInt(day), parseInt(hour));
+            //   var tempRow = [timestamp, parseFloat(temp)];
+            //   var humRow = [parseFloat(hum)];
+
+            // tempData.push(tempRow);
+            // humData.push(humRow);
+            // }
+            // console.log(tempData);
+            // console.log(humData);
           }
         };
 
@@ -343,7 +365,78 @@
 
     };
 
-    function drawHighChart(tempData, humData) {
+    function drawHighChart(data) {
+
+      console.log(data);
+      for (var i = 0; i < data.length; i++) {
+        var temp = data[i].avg_temp;
+        var hum = data[i].avg_hum;
+        var hour = data[i].hour;
+        var day = data[i].day;
+        var month = data[i].month;
+
+
+        var timestamp = Date.UTC(2020, parseInt(month), parseInt(day));
+        var tempRow = [timestamp, parseFloat(temp)];
+        var humRow = [parseFloat(hum)];
+
+      tempData.push(tempRow);
+      humData.push(humRow);
+      };
+
+
+      all_data = {};
+
+      var selected_mac = []
+
+      all_dates = []
+
+      for (var key in data) {
+
+        if (true) {
+          selected_mac.push(key);
+          for (var dates in data[key]) {
+            all_data[new Date(dates).getTime()] = [[], []];
+          }
+        }
+      }
+
+      for (var key in all_data) {
+        all_dates.push(key);
+      }
+
+      all_dates.sort();
+
+      for (var key in selected_mac) {
+        mac_key = selected_mac[key];
+        for (var dates in data[mac_key]) {
+          current_time = new Date(dates).getTime()
+          all_data[current_time][0].push(parseFloat(data[mac_key][dates][0]))
+          all_data[current_time][1].push(parseFloat(data[mac_key][dates][1]))
+        }
+      }
+
+      var temperature = [];
+      var humidity = [];
+      var temperature_avg = [];
+      var humidity_avg = [];
+
+      const arrAvg = arr => arr.reduce((a, b) => a + b, 0) / arr.length
+
+      for (var key in all_dates) {
+        current_date = all_dates[key];
+        arr = all_data[current_date];
+        temperature.push([parseInt(current_date), Math.min.apply(Math, all_data[current_date][0]), Math.max.apply(Math, all_data[current_date][0])])
+
+
+        temperature_avg.push([parseInt(current_date), parseFloat(arrAvg(arr[0]))]);
+
+        humidity.push([parseInt(current_date), Math.min.apply(Math, all_data[current_date][1]), Math.max.apply(Math, all_data[current_date][1])])
+
+        humidity_avg.push([parseInt(current_date), parseFloat(arrAvg(arr[1]))]);
+      }
+
+
       var chartDiv = document.createElement('div');
       chartDiv.className = 'chart';
       chartDiv.style.width = '100%';
@@ -397,13 +490,13 @@
 
         series: [{
           name: 'Temperatures',
-          data: tempData,
+          data: temperature_avg,
           tooltip: {
             valueSuffix: '°C'
           },
         }, {
           name: 'Humidity',
-          data: humData,
+          data: humidity_avg,
           tooltip: {
             valueSuffix: '%'
           },
