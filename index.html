@@ -104,10 +104,12 @@
         title: 'UCSD CSE191'
       });
 
-
+      var tempData = [];
+      var humData = [];
       placeMarker();
       getGlobalData(); //return globalData
       // place marker by devices
+      // drawHighChart(tempData, humData);
 
       function placeMarker() {
         var xmlhttp = new XMLHttpRequest();
@@ -320,148 +322,143 @@
         xmlhttp.setRequestHeader('Content-Type', 'application/json');
         xmlhttp.send(cmdStr);
       };
+
     };
-
-
 
     // viz    
-    function getGlobalData() {
-      var xmlhttp = new XMLHttpRequest();
-      xmlhttp.onreadystatechange = function () {
-        if (this.readyState == 4 && this.status == 200) {
+    function drawHighChart(tempData, humData) {
+        var chartDiv = document.createElement('div');
+        chartDiv.className = 'chart';
+        chartDiv.style.width = '100%';
 
-          var statsObj = JSON.parse(this.responseText);
+        document.getElementById('w3-sidebar').appendChild(chartDiv);
 
-          globalData = statsObj.weather;
-          // console.log(globalData);
+        Highcharts.stockChart(chartDiv, {
 
-          humData = [];
-          tempData = [];
+          rangeSelector: {
+            selected: 2
+          },
+          xAxis: {
+            type: 'datetime'
+          },
+          yAxis: [{ // Primary yAxis
+            labels: {
+              format: '{value}°C',
+              style: {
+                color: Highcharts.getOptions().colors[0]
+              }
+            },
+            title: {
+              text: 'Temperature',
+              style: {
+                color: Highcharts.getOptions().colors[0]
+              }
+            },
+            opposite: true
 
+          }, { // Secondary yAxis
+            gridLineWidth: 0,
+            title: {
+              text: 'Humidity',
+              style: {
+                color: Highcharts.getOptions().colors[1]
+              }
+            },
+            labels: {
+              format: '{value} %',
+              style: {
+                color: Highcharts.getOptions().colors[1]
+              }
+            },
+            opposite: false
 
-          // var humList = [['Hour', 'Hum']];;
-          for (var i = 0; i < statsObj.weather.length; i++) {
-            var temp = globalData[i].avg_temp;
-            var hum = globalData[i].avg_hum;
+          }],
 
-            var hour = globalData[i].hour;
-            var day = globalData[i].day;
-            var month = globalData[i].month;
+          title: {
+            text: 'Average Temperature and Humidity variation'
+          },
 
-            var timestamp = Date.UTC(2020, parseInt(month), parseInt(day), parseInt(hour));
+          series: [{
+            name: 'Temperatures',
+            data: tempData,
+            tooltip: {
+              valueSuffix: '°C'
+            },
+          }, {
+            name: 'Humidity',
+            data: humData,
+            tooltip: {
+              valueSuffix: '%'
+            },
+            yAxis: 1,
+          }],
 
-            var tempRow = [timestamp, parseFloat(temp)];
-            var humRow = [timestamp, parseFloat(hum)];
-            console.log(tempRow);
-
-            tempData.push(tempRow);
-            humData.push(humRow);
-
-          }
-        };
-
-        var jObj;
-        jObj = { cmd: "WEATHER" };
-        var cmdStr = JSON.stringify(jObj);
-        xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
-        xmlhttp.setRequestHeader('Content-Type', 'application/json');
-        xmlhttp.send(cmdStr);
+        });
       };
 
-      function drawGauge(rssi) {
+    function getGlobalData() {
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function () {
+          if (this.readyState == 4 && this.status == 200) {
 
-        var dataRSSI = google.visualization.arrayToDataTable([
-          ['Label', 'Value'],
-          ['RSSI dB', 0],
-        ]);
+            var statsObj = JSON.parse(this.responseText);
 
-        var optionsR = {
-          width: 160, height: 120,
-          redFrom: -99, redTo: -90,
-          yellowFrom: -89, yellowTo: -75,
-          greenFrom: -74, greenTo: 0,
-          minorTicks: 5,
-          max: 0,
-          min: -100
+            globalData = statsObj.weather;
+            console.log(globalData);
+
+            // var humList = [['Hour', 'Hum']];;
+            for (var i = 0; i < statsObj.weather.length; i++) {
+              var temp = globalData[i].avg_temp;
+              var hum = globalData[i].avg_hum;
+
+              var hour = globalData[i].hour;
+              var day = globalData[i].day;
+              var month = globalData[i].month;
+
+              var timestamp = Date.UTC(2020, parseInt(month), parseInt(day), parseInt(hour));
+
+              var tempRow = [timestamp, parseFloat(temp)];
+              var humRow = [timestamp, parseFloat(hum)];
+
+              tempData.push(tempRow);
+              humData.push(humRow);
+
+            }
+            console.log(tempData);
+          };
+
+          var jObj;
+          jObj = { cmd: "WEATHER" };
+          var cmdStr = JSON.stringify(jObj);
+          xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
+          xmlhttp.setRequestHeader('Content-Type', 'application/json');
+          xmlhttp.send(cmdStr);
         };
 
-        var RSSIchart = new google.visualization.Gauge(document.getElementById('RSSIchart_div'));
-        dataRSSI.setValue(0, 1, rssi);
-        RSSIchart.draw(dataRSSI, optionsR);
+        function drawGauge(rssi) {
+
+          var dataRSSI = google.visualization.arrayToDataTable([
+            ['Label', 'Value'],
+            ['RSSI dB', 0],
+          ]);
+
+          var optionsR = {
+            width: 160, height: 120,
+            redFrom: -99, redTo: -90,
+            yellowFrom: -89, yellowTo: -75,
+            greenFrom: -74, greenTo: 0,
+            minorTicks: 5,
+            max: 0,
+            min: -100
+          };
+
+          var RSSIchart = new google.visualization.Gauge(document.getElementById('RSSIchart_div'));
+          dataRSSI.setValue(0, 1, rssi);
+          RSSIchart.draw(dataRSSI, optionsR);
+
+        }
 
       }
-
-    }
-
-    function drawHighChart(tempData, humData) {
-      var chartDiv = document.createElement('div');
-      chartDiv.className = 'chart';
-      chartDiv.style.width = '100%';
-
-      document.getElementById('w3-sidebar').appendChild(chartDiv);
-
-      Highcharts.stockChart(chartDiv, {
-
-        rangeSelector: {
-          selected: 2
-        },
-        xAxis: {
-          type: 'datetime'
-        },
-        yAxis: [{ // Primary yAxis
-          labels: {
-            format: '{value}°C',
-            style: {
-              color: Highcharts.getOptions().colors[0]
-            }
-          },
-          title: {
-            text: 'Temperature',
-            style: {
-              color: Highcharts.getOptions().colors[0]
-            }
-          },
-          opposite: true
-
-        }, { // Secondary yAxis
-          gridLineWidth: 0,
-          title: {
-            text: 'Humidity',
-            style: {
-              color: Highcharts.getOptions().colors[1]
-            }
-          },
-          labels: {
-            format: '{value} %',
-            style: {
-              color: Highcharts.getOptions().colors[1]
-            }
-          },
-          opposite: false
-
-        }],
-
-        title: {
-          text: 'Average Temperature and Humidity variation'
-        },
-
-        series: [{
-          name: 'Temperatures',
-          data: tempData,
-          tooltip: {
-            valueSuffix: '°C'
-          },
-        }, {
-          name: 'Humidity',
-          data: humData,
-          tooltip: {
-            valueSuffix: '%'
-          },
-          yAxis: 1,
-        }],
-
-      });
-    };
 
     function drawBubbleChart() {
 
@@ -521,11 +518,11 @@
 
     google.charts.load('current', { 'packages': ['corechart'] });
     google.charts.setOnLoadCallback(drawBubbleChart);
-    drawHighChart(tempData, humData);
-    
+
   </script>
   <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBRQQ4iVEx6ijcbOgwtc7Y95i7tMdlqtvw&callback=initMap"> </script>
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBRQQ4iVEx6ijcbOgwtc7Y95i7tMdlqtvw&callback=initMap">
+    </script>
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 </body>
 
