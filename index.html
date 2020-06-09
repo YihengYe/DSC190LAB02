@@ -61,7 +61,7 @@
 
     function toggleMyMarker() {
       var toggleButton = document.getElementById("btn-display");
-      console.log(toggleButton.innerHTML);
+      // console.log(toggleButton.innerHTML);
       if (toggleButton.innerHTML == "Hide Other Markers") {
 
         otherMarkers.forEach(blockMarker);
@@ -81,7 +81,6 @@
 
     function showMarker(marker) {
       marker.setVisible(true);
-      console.log('sidebar func')
     };
 
     function initMap() {
@@ -108,14 +107,14 @@
 
 
       placeMarker();
-
+      getData();
       // place marker by devices
 
       function placeMarker() {
         var xmlhttp = new XMLHttpRequest();
         xmlhttp.onload = function () {
           if (this.readyState == 4 && this.status == 200) {
-            console.log(this.responseText);
+            // console.log(this.responseText);
             var statsObj = JSON.parse(this.responseText);
             statsObj.devices.forEach(fillingInfo);
           }
@@ -176,7 +175,7 @@
 
         if (gid != '3') {
           otherMarkers.push(marker);
-          console.log(devmac);
+          // console.log(devmac);
         };
 
         var infowindow = new google.maps.InfoWindow({
@@ -265,51 +264,55 @@
               var temp = statsObj.weather[i].avg_temp;
               var hum = statsObj.weather[i].avg_hum;
               var hour = statsObj.weather[i].hour;
+              var day = statsObj.weather[i].day;
+              var month = statsObj.weather[i].month;
 
-              var tempRow = [hour, temp, hum];
+              var timestamp = Date.UTC(2020, parseInt(month), parseInt(day), parseInt(hour));
+
+              var tempRow = [timestamp, temp, hum];
               // var humRow = [hour, hum];
               tempList.push(tempRow);
               // humList.push(humRow);
             };
-            var tempData = google.visualization.arrayToDataTable(tempList);
-            // var humData = google.visualization.arrayToDataTable(humList);
 
-            var tempOptions = {
-              title: 'Leads',
-              hAxis: { showTextEvery: 5 },
-              vAxes: {
-                0: {
-                  viewWindowMode: 'explicit',
-                  viewWindow: {
-                    max: '100%',
-                    min: '50%'
-                  },
-                  gridlines: { color: 'transparent' },
-                },
-                1: {
-                  gridlines: { color: 'transparent' },
-                  format: "#%"
-                },
-              },
-              series: {
-                0: { targetAxisIndex: 0 },
-                1: { targetAxisIndex: 1 },
-              },
-              colors: ["red", "green"],
-            };
-            // var humOptions = {
+            // var tempData = google.visualization.arrayToDataTable(tempList);
 
-            // }
+            // var tempOptions = {
+            //   title: 'Leads',
+            //   hAxis: { showTextEvery: 5 },
+            //   vAxes: {
+            //     0: {
+            //       viewWindowMode: 'explicit',
+            //       viewWindow: {
+            //         max: '100%',
+            //         min: '50%'
+            //       },
+            //       gridlines: { color: 'transparent' },
+            //     },
+            //     1: {
+            //       gridlines: { color: 'transparent' },
+            //       format: "#%"
+            //     },
+            //   },
+            //   series: {
+            //     0: { targetAxisIndex: 0 },
+            //     1: { targetAxisIndex: 1 },
+            //   },
+            //   colors: ["red", "green"],
+            // };
+
+            // var node = document.createElement('div');
+            // // var humNode = document.createElement('div');
+
+            // var tempChart = new google.visualization.LineChart(node);
+            // // var humChart = new google.visualization.LineChart(node);
+
+            // tempChart.draw(tempData, tempOptions);
+            // // tempChart.draw(humData, humOptions);
 
 
-            var node = document.createElement('div');
-            // var humNode = document.createElement('div');
 
-            var tempChart = new google.visualization.LineChart(node);
-            // var humChart = new google.visualization.LineChart(node);
-
-            tempChart.draw(tempData, tempOptions);
-            // tempChart.draw(humData, humOptions);
+            
             window.setContent(node);
             // window.addContent(humNode);
           }
@@ -322,22 +325,22 @@
         xmlhttp.send(cmdStr);
       };
 
-      function getData() {
+      function getGlobalData() {
         var xmlhttp = new XMLHttpRequest();
         xmlhttp.onreadystatechange = function () {
           if (this.readyState == 4 && this.status == 200) {
 
             var statsObj = JSON.parse(this.responseText);
 
-            data = statsObj.weather;
-
-            console.log(data)
+            globaldata = statsObj.weather;
+            
+            // console.log(data)
           }
         };
 
         var jObj;
-        jObj = { cmd: "WEATHER" };
-        var cmdStr = JSON.stringify(cmdObj);
+        jObj = { cmd: "WEATHER"};
+        var cmdStr = JSON.stringify(jObj);
         xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
         xmlhttp.setRequestHeader('Content-Type', 'application/json');
         xmlhttp.send(cmdStr);
@@ -368,7 +371,7 @@
 
     }
 
-    function drawSeriesChart() {
+    function drawBubbleChart() {
 
       readTextFile('./assets/viz-data.json', function (text) {
         var jObj = JSON.parse(text);
@@ -391,7 +394,7 @@
           vAxis: { title: 'longitude' },
           bubble: { textStyle: { fontSize: 11 } }
         };
-        console.log(rawData)
+        // console.log(rawData)
         var data = google.visualization.arrayToDataTable(rawData)
         var chart = new google.visualization.BubbleChart(document.getElementById('series_chart_div'));
         chart.draw(data, options);
@@ -422,7 +425,7 @@
     }
 
     google.charts.load('current', { 'packages': ['corechart'] });
-    google.charts.setOnLoadCallback(drawSeriesChart);
+    google.charts.setOnLoadCallback(drawBubbleChart);
 
   </script>
   <script async defer
