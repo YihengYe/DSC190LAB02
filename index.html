@@ -308,11 +308,8 @@
             // // var humChart = new google.visualization.LineChart(node);
 
             // tempChart.draw(tempData, tempOptions);
-            // // tempChart.draw(humData, humOptions);
+            // // tempChart.draw(humData, humOptions);git
 
-
-
-            
             window.setContent(node);
             // window.addContent(humNode);
           }
@@ -332,9 +329,9 @@
 
             var statsObj = JSON.parse(this.responseText);
 
-            globaldata = statsObj.weather;
-            
-            // console.log(data)
+            globalData = statsObj.weather;
+
+            // console.log(globalData)
           }
         };
 
@@ -345,6 +342,69 @@
         xmlhttp.setRequestHeader('Content-Type', 'application/json');
         xmlhttp.send(cmdStr);
       };
+
+      function drawHighChart(humData, tempData) {
+       
+        Highcharts.stockChart('title', {
+
+          rangeSelector: {
+            selected: 2
+          },
+
+          yAxis: [{ // Primary yAxis
+            labels: {
+              format: '{value}°C',
+              style: {
+                color: Highcharts.getOptions().colors[0]
+              }
+            },
+            title: {
+              text: 'Temperature',
+              style: {
+                color: Highcharts.getOptions().colors[0]
+              }
+            },
+            opposite: true
+
+          }, { // Secondary yAxis
+            gridLineWidth: 0,
+            title: {
+              text: 'Humidity',
+              style: {
+                color: Highcharts.getOptions().colors[1]
+              }
+            },
+            labels: {
+              format: '{value} %',
+              style: {
+                color: Highcharts.getOptions().colors[1]
+              }
+            },
+            opposite: false
+
+          }],
+
+          title: {
+            text: 'Average Temperature and Humidity variation'
+          },
+
+          series: [{
+            name: 'Temperatures',
+            data: tempData,
+            tooltip: {
+              valueSuffix: '°C'
+            },
+          }, {
+            name: 'Humidity',
+            data: humData,
+            tooltip: {
+              valueSuffix: '%'
+            },
+            yAxis: 1,
+          }],
+
+        });
+      }
 
       function drawGauge(rssi) {
 
@@ -398,6 +458,9 @@
         var data = google.visualization.arrayToDataTable(rawData)
         var chart = new google.visualization.BubbleChart(document.getElementById('series_chart_div'));
         chart.draw(data, options);
+
+
+        
       })
     }
 
