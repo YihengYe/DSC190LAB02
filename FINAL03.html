@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>DSC190 Map Viewer</title>
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <meta name="viewport" content="initial-scale=1.0">
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+  <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+  <script src="https://code.highcharts.com/stock/highstock.js"></script>
+  <script src="https://code.highcharts.com/stock/modules/data.js"></script>
+  <script src="https://code.highcharts.com/stock/highcharts-more.js"></script>
+  <script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+  <script src="https://code.highcharts.com/stock/modules/export-data.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.13/moment-timezone-with-data-2012-2022.min.js"></script>
+  <style>
+    /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+    #map {
+      height: 100%;
+    }
+
+    /* Optional: Makes the sample page fill the window. */
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div id='navbar'>
+    <button id="btn-display" onclick="toggleMyMarker()"
+      style="position:fixed; margin-left: 45%; margin-right: 45%; z-index: 10;">Hide Other Markers</button>
+  </div>
+  <div id="mySidebar" style="display: none;">
+    <button id='btn-hide' onclick="hideSidebar()"
+      style="position:fixed;margin-left: 55%; margin-right: 35%; z-index: 10;">Close Sidebar</button>
+    <div id='w3-sidebar' class="w3-sidebar w3-bar-block w3-collapse w3-card w3-animate-right"
+      style="width:45%; right:0;">
+
+      <div id="series_chart_div" style="width: 100%;"></div>
+
+    </div>
+
+  </div>
+  <div id="map"></div>
+
+  <script>
+
+    // init charts
+    google.charts.load('current', { 'packages': ['gauge'] });
+    //      google.charts.setOnLoadCallback(drawGauges);
+    var otherMarkers = [];
+    markerDict = {};
+    var mymark = [];
+    var choose = [];
+    var norchoose = new Map();
+    var shinmarker = new Map();
+
+
+    function toggleMyMarker() {
+      var toggleButton = document.getElementById("btn-display");
+      // console.log(toggleButton.innerHTML);
+      if (toggleButton.innerHTML == "Hide Other Markers") {
+
+        otherMarkers.forEach(blockMarker);
+        toggleButton.textContent = "Show Other Markers";
+      }
+
+      else if (toggleButton.innerHTML == "Show Other Markers") {
+
+        otherMarkers.forEach(showMarker);
+        toggleButton.textContent = "Hide Other Markers";
+      }
+    };
+
+    function blockMarker(marker) {
+      marker.setVisible(false);
+    };
+
+    function showMarker(marker) {
+      marker.setVisible(true);
+    };
+
+    function haversine_distance(mk1, mk2) {
+      var R = 6371.0710; // Radius of the Earth in Km
+      var rlat1 = mk1.get('lat') * (Math.PI / 180); // Convert degrees to radians
+      var rlat2 = mk2.get('lat') * (Math.PI / 180); // Convert degrees to radians
+      var difflat = rlat2 - rlat1; // Radian difference (latitudes)
+      var difflon = (mk2.get('lng') - mk1.get('lng')) * (Math.PI / 180); // Radian difference (longitudes)
+      var d = 2 * R * Math.asin(Math.sqrt(Math.sin(difflat / 2) * Math.sin(difflat / 2) + Math.cos(rlat1) * Math.cos(rlat2) * Math.sin(difflon / 2) * Math.sin(difflon / 2)));
+      return d;
+    };
+
+    function initMap() {
+
+
+
+      var ourClass = "null";
+
+      //  var exLink = '<iframe width=1000 height=600 src="http://cse191iot.ucsd.edu/ian/sample_viewer.html"></iframe>';
+      var exLink = '<iframe width=400 height=400 src="http://dsc-iot.ucsd.edu/gid03/view.html"></iframe>';
+
+      // var exinfowindow = new google.maps.InfoWindow({
+      //   content: exLink,
+      //   maxWidth: 1000,
+      //   maxHeight: 600
+      // });
+
+
+      var map = new google.maps.Map(document.getElementById('map'), {
+        zoom: 15,
+        center: { lat: 32.883, lng: -117.234 },
+        title: 'UCSD CSE191'
+      });
+
+      placeMarker();
+      var themark = mymark[0];
+
+      var globalData;
+      getGlobalData(); //return globalData
+      var circle = new google.maps.Circle({
+        map: map,
+        radius: 1000,    // 1K in metres
+        strokeColor: "#FF0000",
+        strokeOpacity: 0.8,
+        strokeWeight: 2,
+        fillColor: '#800000',
+        fillOpacity: 0.20
+      });
+
+      circle.bindTo('center', themark, 'position');
+      circle.setEditable(true);
+      circle.setVisible(true);
+
+      circle.addListener('radius_changed', function () {
+        updateMarkers(circle.getRadius());
+        drawHighChart(globalData);
+      });
+
+
+
+
+      drawHighChart(globalData);
+      // place marker by devices
+
+      function placeMarker() {
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onload = function () {
+          if (this.readyState == 4 && this.status == 200) {
+            // console.log(this.responseText);
+            var statsObj = JSON.parse(this.responseText);
+            statsObj.devices.forEach(fillingInfo);
+          }
+        };
+
+        var cmdObj = { "cmd": "LIST" };
+        var cmdStr = JSON.stringify(cmdObj);
+        xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", false);
+        xmlhttp.setRequestHeader('Content-Type', 'application/json');
+        xmlhttp.send(cmdStr);
+      };
+
+      function fillingInfo(device) {
+        var gid = device.groupID;
+        var devmac = device.mac;
+        var status = device.status;
+        var lon = device.dev_long;
+        var lat = device.dev_lat;
+        var ts = device.lastseen;
+
+
+        if (lon == null || lat == null) {
+          return 'invalid device position'
+        };
+
+
+        /* null lat & lon val */
+        var iconColor;
+        if (status == 'OK') {
+          iconColor = 'green';
+        }
+
+        else if (status == 'ERROR') {
+          iconColor = 'red';
+        }
+
+        else if (status == 'TIMEOUT') {
+          iconColor = 'red';
+        }
+        else if (status == 'WARNING') {
+          iconColor = 'yellow';
+        }
+
+        else {
+          iconColor = 'blue';
+        }
+
+
+        let marker = new google.maps.Marker({
+          map: map,
+          position: { lat: lat, lng: lon },
+          icon: {
+            url: `http://maps.google.com/mapfiles/ms/icons/${iconColor}-dot.png`
+          },
+          title: `marker-${devmac}, groupID-${gid}, status-${status}, lastseen-${ts}`,
+          visible: true
+        });
+
+        markerDict[devmac] = [marker];
+
+        if (gid != '3') {
+          otherMarkers.push(marker);
+          var limap = new Map();
+          limap.set('lat', lat);
+          limap.set('lng', lon);
+          norchoose.set(devmac, limap);
+          // console.log(devmac);
+        };
+        if (gid == '3') {
+          if (devmac == '80:7D:3A:BA:E2:14') {
+            mymark.push(marker);
+            mymark.push(devmac);
+            choose.push(devmac);
+            var limap2 = new Map();
+            limap2.set('lat', lat);
+            limap2.set('lng', lon);
+            shinmarker.set(devmac, limap2);
+          } else {
+            var limap3 = new Map();
+            limap3.set('lat', lat);
+            limap3.set('lng', lon);
+            norchoose.set(devmac, limap3);
+          }
+        };
+
+
+
+        var infowindow = new google.maps.InfoWindow({
+          width: 8000,
+          height: 8000
+        });
+
+
+        var exinfowindow = new google.maps.InfoWindow({
+          content: exLink,
+          maxWidth: 1000,
+          maxHeight: 600
+        });
+
+        marker.addListener('click', function () {
+          showSidebar();
+          // infowindow.open(map, marker);
+          /* initalize the infowindow and then do updates.. */
+          // updateBleInfo(infowindow, devmac);
+
+        });
+
+        // marker.addListener('ondblclick', showSidebar);
+
+        marker.addListener('mouseover', function () {
+          infowindow.open(map, marker);
+          updateInfo(infowindow, devmac);
+          // exinfowindow.open(map, marker);
+          // drawTempHumChart(infowindow, devmac);
+        });
+
+        marker.addListener('mouseout', function () {
+          infowindow.close();
+        });
+      }
+
+      function updateInfo(window, devmac) {
+        var xmlhttp = new XMLHttpRequest();
+
+        xmlhttp.onreadystatechange = function () {
+          if (this.readyState == 4 && this.status == 200) {
+            var ourClass = "";
+
+            ourClass += "<table class= 'table' id = 'blelogsTable'>";
+            ourClass += "<thead>";
+            ourClass += "<tr>";
+            ourClass += "<th>timestamp </th>";
+            ourClass += "<th>temperature </th>";
+            ourClass += "<th>humidity </th>";
+            ourClass += "</tr>";
+
+
+            var statsObj = JSON.parse(this.responseText);
+
+            // console.log(statsObj);
+            var weeklydata = [];
+
+            for (var i = 0; i < statsObj.weather.length; i++) {
+              var temp = statsObj.weather[i].avg_temp;
+              var hum = statsObj.weather[i].avg_hum;
+              var day = statsObj.weather[i].day;
+              var month = statsObj.weather[i].month;
+
+              var timestamp = '2020-' + month + '-' + day;
+
+
+              ourClass += `<tr><td>${timestamp}</td><td>${temp}</td><td>${hum}</td></tr>`
+
+            }
+
+            ourClass += "</thead>"
+            ourClass += "</table>"
+
+            window.setContent(ourClass);
+          }
+        };
+
+        var cmdObj;
+        cmdObj = { "cmd": "WEATHER", "devmac": devmac };
+        var cmdStr = JSON.stringify(cmdObj);
+        xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
+        xmlhttp.setRequestHeader('Content-Type', 'application/json');
+        xmlhttp.send(cmdStr);
+
+      };
+
+      // function drawTempHumChart(window, devmac) {
+
+      //   // do some AJAX magic to show updated data
+      //   var xmlhttp = new XMLHttpRequest();
+
+      //   xmlhttp.onreadystatechange = function () {
+
+      //     if (this.readyState == 4 && this.status == 200) {
+      //       var statsObj = JSON.parse(this.responseText);
+      //       var tempList = [['Hour', 'Temp', 'Hum']];
+      //       // var humList = [['Hour', 'Hum']];;
+      //       for (var i = 0; i < statsObj.weather.length; i++) {
+      //         var temp = statsObj.weather[i].avg_temp;
+      //         var hum = statsObj.weather[i].avg_hum;
+      //         var hour = statsObj.weather[i].hour;
+      //         var day = statsObj.weather[i].day;
+      //         var month = statsObj.weather[i].month;
+
+      //         var timestamp = Date.UTC(2020, parseInt(month), parseInt(day), parseInt(hour));
+
+      //         var tempRow = [timestamp, temp, hum];
+      //         // var humRow = [hour, hum];
+      //         tempList.push(tempRow);
+      //         // humList.push(humRow);
+      //       };
+
+      //       // var tempData = google.visualization.arrayToDataTable(tempList);
+
+      //       // var tempOptions = {
+      //       //   title: 'Leads',
+      //       //   hAxis: { showTextEvery: 5 },
+      //       //   vAxes: {
+      //       //     0: {
+      //       //       viewWindowMode: 'explicit',
+      //       //       viewWindow: {
+      //       //         max: '100%',
+      //       //         min: '50%'
+      //       //       },
+      //       //       gridlines: { color: 'transparent' },
+      //       //     },
+      //       //     1: {
+      //       //       gridlines: { color: 'transparent' },
+      //       //       format: "#%"
+      //       //     },
+      //       //   },
+      //       //   series: {
+      //       //     0: { targetAxisIndex: 0 },
+      //       //     1: { targetAxisIndex: 1 },
+      //       //   },
+      //       //   colors: ["red", "green"],
+      //       // };
+
+      //       // var node = document.createElement('div');
+      //       // // var humNode = document.createElement('div');
+
+      //       // var tempChart = new google.visualization.LineChart(node);
+      //       // // var humChart = new google.visualization.LineChart(node);
+
+      //       // tempChart.draw(tempData, tempOptions);
+      //       // // tempChart.draw(humData, humOptions);git
+
+      //       // window.setContent(node);
+      //       // window.addContent(humNode);
+      //     }
+      //   };
+
+      //   var cmdObj = { "cmd": "WEATHER", "devmac": devmac };
+      //   var cmdStr = JSON.stringify(cmdObj);
+      //   xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
+      //   xmlhttp.setRequestHeader('Content-Type', 'application/json');
+      //   xmlhttp.send(cmdStr);
+      // };
+
+      function updateMarkers(radius) {
+        choose = [mymark[1]];
+
+        for (let key of norchoose.keys()) {
+          dis = haversine_distance(shinmarker.get(mymark[1]), norchoose.get(key));
+          if (dis * 1000 <= radius) {
+            choose.push(key);
+          }
+
+
+        };
+
+      };
+
+      function getGlobalData() {
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function () {
+          if (this.readyState == 4 && this.status == 200) {
+
+            var statsObj = JSON.parse(this.responseText);
+
+            globalData = statsObj.weather;
+            // for (var i = 0; i < globalData.length; i++) {
+            //   var temp = globalData[i].avg_temp;
+            //   var hum = globalData[i].avg_hum;
+            //   var hour = globalData[i].hour;
+            //   var day = globalData[i].day;
+            //   var month = globalData[i].month;
+
+
+            //   var timestamp = Date.UTC(2020, parseInt(month), parseInt(day), parseInt(hour));
+            //   var tempRow = [timestamp, parseFloat(temp)];
+            //   var humRow = [parseFloat(hum)];
+
+            // tempData.push(tempRow);
+            // humData.push(humRow);
+            // }
+            // console.log(tempData);
+            // console.log(humData);
+          }
+        };
+
+        var jObj;
+        jObj = { cmd: "WEATHER" };
+        var cmdStr = JSON.stringify(jObj);
+        xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", false);
+        xmlhttp.setRequestHeader('Content-Type', 'application/json');
+        xmlhttp.send(cmdStr);
+      };
+    };
+
+    function drawHighChart(data) {
+      var check = new Map();
+      for (var i = 0; i < data.length; i++) {
+        var temp = data[i].avg_temp;
+        var hum = data[i].avg_hum;
+        var hour = data[i].hour;
+        var day = data[i].day;
+        var month = data[i].month;
+        var themac = data[i].mac;
+
+
+        var timestamp = Date.UTC(2020, parseInt(month) - 1, parseInt(day), parseInt(hour));
+        var numstamp = parseInt(timestamp);
+        // var tempRow = [timestamp, parseFloat(temp)];
+        // var humRow = [parseFloat(hum)];
+        if (choose.includes(themac)) {
+          if (check.has(numstamp)) {
+            var map3 = check.get(numstamp);
+            var temp3 = map3.get('temp');
+            temp3.push(temp);
+            var hum3 = map3.get('hum');
+            hum3.push(hum);
+
+          } else {
+            var map2 = new Map();
+            var temp2 = [];
+            var hum2 = [];
+            temp2.push(temp);
+            hum2.push(hum);
+            map2.set('temp', temp2);
+            map2.set('hum', hum2);
+            check.set(numstamp, map2);
+
+          }
+        };
+
+      };
+      var temperature_avg = [];
+      var humidity_avg = [];
+      var wind=[];
+      let average = (array) => array.reduce((a, b) => a + b) / array.length;
+      for (let key of check.keys()) {
+
+        var map4 = check.get(key);
+        var avtemp = average(map4.get('temp'));
+        var avhum = average(map4.get('hum'));
+        var temp4 = [key, avtemp];
+        temperature_avg.push(temp4);
+        var hum4 = [key, avhum];
+        humidity_avg.push(hum4);
+        var win4=-0.3539*avtemp-0.0713*avhum+19.6735;
+        var wind4=[key, win4];
+        wind.push(wind4);
+      };
+      temperature_avg.sort(function (a, b) { return a[0] - b[0]; });
+      humidity_avg.sort(function (a, b) { return a[0] - b[0]; });
+      wind.sort(function (a, b) { return a[0] - b[0]; });
+
+
+      var chartDiv = document.createElement('div');
+      chartDiv.className = 'line';
+      chartDiv.style.width = '100%';
+      var x = document.getElementById('w3-sidebar').children;
+      var hs = true;
+      for (var j = 0; j < x.length; j++) {
+        if (x[j].className == 'line') {
+          chartDiv = x[j];
+          hs = false;
+        }
+      };
+      if (hs) {
+        document.getElementById('w3-sidebar').appendChild(chartDiv);
+      };
+
+      Highcharts.stockChart(chartDiv, {
+
+        rangeSelector: {
+          selected: 2
+        },
+        xAxis: {
+          type: 'datetime'
+        },
+        yAxis: [{ // Primary yAxis
+          labels: {
+            format: '{value}°C',
+            style: {
+              color: Highcharts.getOptions().colors[0]
+            }
+          },
+          title: {
+            text: 'Temperature',
+            style: {
+              color: Highcharts.getOptions().colors[0]
+            }
+          },
+          opposite: true
+
+        }, { // Secondary yAxis
+          gridLineWidth: 0,
+          title: {
+            text: 'Humidity',
+            style: {
+              color: Highcharts.getOptions().colors[1]
+            }
+          },
+          labels: {
+            format: '{value} %',
+            style: {
+              color: Highcharts.getOptions().colors[1]
+            }
+          },
+          opposite: false
+
+        }],
+
+        title: {
+          text: 'Average Temperature and Humidity variation--with predicted wind speed'
+        },
+
+        series: [{
+          name: 'Temperatures',
+          data: temperature_avg,
+          tooltip: {
+            valueSuffix: '°C'
+          },
+        }, {
+          name: 'Humidity',
+          data: humidity_avg,
+          tooltip: {
+            valueSuffix: '%'
+          },
+          yAxis: 1,
+        },{
+          name: "predicted wind speed",
+          data:wind,
+        }
+        ],
+
+      });
+
+      var chartDiv2 = document.createElement('div');
+      chartDiv2.className = 'scatter';
+      chartDiv2.style.width = '100%';
+      var x2 = document.getElementById('w3-sidebar').children;
+      var hs2 = true;
+      for (var j = 0; j < x2.length; j++) {
+        if (x2[j].className == 'scatter') {
+          chartDiv2 = x2[j];
+          hs2 = false;
+        }
+      };
+      if (hs2) {
+        document.getElementById('w3-sidebar').appendChild(chartDiv2);
+      };
+
+
+
+      //format temp/hum
+      var scatterClass1 = [];
+      var scatterClass2 = [];
+
+      for (var k = 0; k < temperature_avg.length; k++) {
+        // var windSpeed = -0.3539 * temperature_avg[k][1] - 0.0713 * humidity_avg[k][1] + 19.6735;
+        var toPush = [temperature_avg[k][1], humidity_avg[k][1]]
+        scatterClass1.push(toPush)
+      };
+
+
+      Highcharts.chart(chartDiv2, {
+        chart: {
+          type: 'scatter',
+          zoomType: 'xy'
+        },
+        title: {
+          text: 'AVG Temperature and Huamidity Scatter plot (agg. by hours in last 5 days)'
+        },
+
+        xAxis: {
+          min: 15,
+          max: 35,
+          title: {
+            enabled: true,
+            text: 'Temp (C)'
+          },
+          startOnTick: true,
+          endOnTick: true,
+          showLastLabel: true
+        },
+        yAxis: {
+          min: 35,
+          max: 65,
+          title: {
+            text: 'Hum (%)'
+          }
+        },
+        legend: {
+          layout: 'vertical',
+          align: 'left',
+          verticalAlign: 'top',
+          x: 100,
+          y: 70,
+          floating: true,
+          backgroundColor: Highcharts.defaultOptions.chart.backgroundColor,
+          borderWidth: 1
+        },
+        plotOptions: {
+          scatter: {
+            marker: {
+              radius: 5,
+              states: {
+                hover: {
+                  enabled: true,
+                  lineColor: 'rgb(100,100,100)'
+                }
+              }
+            },
+            states: {
+              hover: {
+                marker: {
+                  enabled: false
+                }
+              }
+            },
+            tooltip: {
+              headerFormat: '<b>{series.name}</b><br>',
+              pointFormat: '{point.x} C, {point.y} %'
+            }
+          }
+        },
+        series: [{
+          name: 'value',
+          color: 'rgba(223, 83, 83, .5)',
+          data: scatterClass1,
+
+        }, 
+        // {
+        //   name: 'clear',
+        //   color: 'rgba(119, 152, 191, .5)',
+        //   data: [[]]
+        // }
+        ]
+      });
+
+
+    };
+
+    function drawBubbleChart() {
+
+      readTextFile('./assets/viz-data.json', function (text) {
+        var jObj = JSON.parse(text);
+        var rawData = [];
+
+        // rawData.push(Object.keys(jObj[0]));
+        rawData.push(['id', 'lat', 'lon', 'devmac', 'count']);
+
+        for (var i in jObj) {
+          var devmac = jObj[i].devmac;
+          var count = jObj[i]["COUNT(DISTINCT blemac)"];
+          var lat = jObj[i].dev_lat;
+          var lon = jObj[i].dev_long;
+          rawData.push([null, lat, lon, devmac, count]);
+
+        }
+        var options = {
+          title: 'population density estimated by rssi counts',
+          hAxis: { title: 'latitude' },
+          vAxis: { title: 'longitude' },
+          bubble: { textStyle: { fontSize: 11 } }
+        };
+        // console.log(rawData)
+        var data = google.visualization.arrayToDataTable(rawData)
+        var chart = new google.visualization.BubbleChart(document.getElementById('series_chart_div'));
+        chart.draw(data, options);
+
+
+
+      })
+    }
+
+    function hideSidebar() {
+      var sidebar = document.getElementById("mySidebar")
+      if (sidebar.style.display == 'block') {
+        sidebar.style.display = "none";
+      }
+    };
+
+    function showSidebar() {
+      document.getElementById("mySidebar").style.display = "block";
+    }
+
+    function readTextFile(file, callback) {
+      var rawFile = new XMLHttpRequest();
+      rawFile.overrideMimeType("application/json");
+      rawFile.open("GET", file, true);
+      rawFile.onreadystatechange = function () {
+        if (rawFile.readyState === 4 && rawFile.status == "200") {
+          callback(rawFile.responseText);
+        }
+      }
+      rawFile.send(null);
+    }
+
+    google.charts.load('current', { 'packages': ['corechart'] });
+    // google.charts.setOnLoadCallback(drawBubbleChart);
+
+  </script>
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBRQQ4iVEx6ijcbOgwtc7Y95i7tMdlqtvw&callback=initMap">
+    </script>
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+</body>
+
+</html>
