@@ -330,19 +330,17 @@
             var statsObj = JSON.parse(this.responseText);
 
             data = statsObj.weather;
-            drawCharts(data);
-            ocean();
+
+            console.log(data)
           }
         };
 
         var jObj;
-        jObj = { cmd: "VIZTEMP" };
-
-        var jStr = JSON.stringify(jObj);
-        xmlhttp.open("POST", urlStr, true);
+        jObj = { cmd: "WEATHER" };
+        var cmdStr = JSON.stringify(cmdObj);
+        xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
         xmlhttp.setRequestHeader('Content-Type', 'application/json');
-        xmlhttp.send(jStr);
-
+        xmlhttp.send(cmdStr);
       };
 
       function drawGauge(rssi) {
