@@ -410,7 +410,8 @@
         var hum4=[key, avhum];
         humidity_avg.push(hum4);
       };
-
+      temperature_avg.sort(function(a,b){return a[0]-b[0];});
+      humidity_avg.sort(function(a,b){return a[0]-b[0];});
 
     
 
