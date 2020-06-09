@@ -58,10 +58,10 @@
     //      google.charts.setOnLoadCallback(drawGauges);
     var otherMarkers = [];
     markerDict = {};
-    var mymark=[];
-    var choose=[];
-    var norchoose=new Map();
-    var shinmarker=new Map();
+    var mymark = [];
+    var choose = [];
+    var norchoose = new Map();
+    var shinmarker = new Map();
 
 
     function toggleMyMarker() {
@@ -89,13 +89,13 @@
     };
 
     function haversine_distance(mk1, mk2) {
-	      var R = 6371.0710; // Radius of the Earth in Km
-	      var rlat1 = mk1.get('lat') * (Math.PI/180); // Convert degrees to radians
-	      var rlat2 = mk2.get('lat') * (Math.PI/180); // Convert degrees to radians
-	      var difflat = rlat2-rlat1; // Radian difference (latitudes)
-	      var difflon = (mk2.get('lng')-mk1.get('lng')) * (Math.PI/180); // Radian difference (longitudes)
-	      var d = 2 * R * Math.asin(Math.sqrt(Math.sin(difflat/2)*Math.sin(difflat/2)+Math.cos(rlat1)*Math.cos(rlat2)*Math.sin(difflon/2)*Math.sin(difflon/2)));
-	      return d;
+      var R = 6371.0710; // Radius of the Earth in Km
+      var rlat1 = mk1.get('lat') * (Math.PI / 180); // Convert degrees to radians
+      var rlat2 = mk2.get('lat') * (Math.PI / 180); // Convert degrees to radians
+      var difflat = rlat2 - rlat1; // Radian difference (latitudes)
+      var difflon = (mk2.get('lng') - mk1.get('lng')) * (Math.PI / 180); // Radian difference (longitudes)
+      var d = 2 * R * Math.asin(Math.sqrt(Math.sin(difflat / 2) * Math.sin(difflat / 2) + Math.cos(rlat1) * Math.cos(rlat2) * Math.sin(difflon / 2) * Math.sin(difflon / 2)));
+      return d;
     };
 
     function initMap() {
@@ -121,28 +121,28 @@
       });
 
       placeMarker();
-      var themark=mymark[0];
-      
+      var themark = mymark[0];
+
       var globalData;
       getGlobalData(); //return globalData
       var circle = new google.maps.Circle({
-		  map: map,
-		  radius: 1000,    // 1K in metres
-          strokeColor: "#FF0000",
-          strokeOpacity: 0.8,
-          strokeWeight: 2,
-		  fillColor: '#800000',
-          fillOpacity: 0.20
+        map: map,
+        radius: 1000,    // 1K in metres
+        strokeColor: "#FF0000",
+        strokeOpacity: 0.8,
+        strokeWeight: 2,
+        fillColor: '#800000',
+        fillOpacity: 0.20
       });
-      
-      circle.bindTo('center', themark, 'position');          
+
+      circle.bindTo('center', themark, 'position');
       circle.setEditable(true);
       circle.setVisible(true);
 
-      circle.addListener('radius_changed', function() {
+      circle.addListener('radius_changed', function () {
         updateMarkers(circle.getRadius());
         drawHighChart(globalData);
-		  });
+      });
 
 
 
@@ -217,23 +217,23 @@
 
         if (gid != '3') {
           otherMarkers.push(marker);
-          var limap=new Map();
+          var limap = new Map();
           limap.set('lat', lat);
           limap.set('lng', lon);
           norchoose.set(devmac, limap);
           // console.log(devmac);
         };
-        if (gid =='3'){
-          if (devmac=='80:7D:3A:BA:E2:14'){
+        if (gid == '3') {
+          if (devmac == '80:7D:3A:BA:E2:14') {
             mymark.push(marker);
             mymark.push(devmac);
             choose.push(devmac);
-            var limap2=new Map();
+            var limap2 = new Map();
             limap2.set('lat', lat);
             limap2.set('lng', lon);
             shinmarker.set(devmac, limap2);
-          }else{
-            var limap3=new Map();
+          } else {
+            var limap3 = new Map();
             limap3.set('lat', lat);
             limap3.set('lng', lon);
             norchoose.set(devmac, limap3);
@@ -266,52 +266,66 @@
 
         marker.addListener('mouseover', function () {
           infowindow.open(map, marker);
+          updateInfo(infowindow, devmac);
           // exinfowindow.open(map, marker);
           drawTempHumChart(infowindow, devmac);
         });
 
         marker.addListener('mouseout', function () {
-          // infowindow.close();
+          infowindow.close();
         });
       }
 
-      // function updateDevInfo(window, devmac) {
+      function updateInfo(window, devmac) {
+        var xmlhttp = new XMLHttpRequest();
 
-      //   // do some AJAX magic to show updated data
-      //   var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function () {
+          if (this.readyState == 4 && this.status == 200) {
+            var ourClass = "";
 
-      //   xmlhttp.onreadystatechange = function () {
+            ourClass += "<table class= 'table' id = 'blelogsTable'>";
+            ourClass += "<thead>";
+            ourClass += "<tr>";
+            ourClass += "<th>timestamp </th>";
+            ourClass += "<th>temperature </th>";
+            ourClass += "<th>humidity </th>";
+            ourClass += "</tr>";
 
-      //     if (this.readyState == 4 && this.status == 200) {
-      //       var statsObj = JSON.parse(this.responseText);
-      //       var ourClass = "";
 
-      //       var devmac = statsObj.devices[0].mac;
-      //       var gid = statsObj.devices[0].groupID;
-      //       var lastseen = statsObj.devices[0].lastseen;
-      //       var status = statsObj.devices[0].status;
+            var statsObj = JSON.parse(this.responseText);
 
-      //       ourClass += "<table class= 'table' id = 'devicesTable'>"
-      //       ourClass += "<thead>"
-      //       ourClass += "<tr>"
-      //       ourClass += "<th>timestamp </th>"
-      //       ourClass += "<th>devmac </th>"
-      //       ourClass += "<th>gid </th>"
-      //       ourClass += "<th>status </th>"
-      //       ourClass += "</tr>"
-      //       ourClass += `<tr><td>${lastseen}</td><td>${devmac}</td><td>${gid}</td><td>${status}</td></tr>`
-      //       ourClass += "</thead>"
-      //       ourClass += "</table>"
-      //       window.setContent(ourClass);
-      //     }
-      //   };
+            // console.log(statsObj);
+            var weeklydata = [];
 
-      //   var cmdObj = { "cmd": "LIST", "mac": devmac };
-      //   var cmdStr = JSON.stringify(cmdObj);
-      //   xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
-      //   xmlhttp.setRequestHeader('Content-Type', 'application/json');
-      //   xmlhttp.send(cmdStr);
-      // };
+            for (var i = 0; i < statsObj.weather.length; i++) {
+              var temp = statsObj.weather[i].avg_temp;
+              var hum = statsObj.weather[i].avg_hum;
+              var hour = statsObj.weather[i].hour;
+              var day = statsObj.weather[i].day;
+              var month = statsObj.weather[i].month;
+              
+              var timestamp = '2020-'+ month + '-' + day + '-' +  hour;
+
+
+              ourClass += `<tr><td>${timestamp}</td><td>${temp}</td><td>${hum}</td></tr>`
+
+            }
+
+            ourClass += "</thead>"
+            ourClass += "</table>"
+
+            window.setContent(ourClass);
+          }
+        };
+
+        var cmdObj;
+        cmdObj = { "cmd": "WEATHER", "devmac": devmac };
+        var cmdStr = JSON.stringify(cmdObj);
+        xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
+        xmlhttp.setRequestHeader('Content-Type', 'application/json');
+        xmlhttp.send(cmdStr);
+
+      };
 
       function drawTempHumChart(window, devmac) {
 
@@ -386,12 +400,12 @@
         xmlhttp.send(cmdStr);
       };
 
-      function updateMarkers(radius){
-        choose=[mymark[1]];
+      function updateMarkers(radius) {
+        choose = [mymark[1]];
 
-        for(let key of norchoose.keys()){
-          dis=haversine_distance(shinmarker.get(mymark[1]), norchoose.get(key));
-          if (dis*1000<=radius){
+        for (let key of norchoose.keys()) {
+          dis = haversine_distance(shinmarker.get(mymark[1]), norchoose.get(key));
+          if (dis * 1000 <= radius) {
             choose.push(key);
           }
 
@@ -438,32 +452,32 @@
     };
 
     function drawHighChart(data) {
-      var check=new Map();
+      var check = new Map();
       for (var i = 0; i < data.length; i++) {
         var temp = data[i].avg_temp;
         var hum = data[i].avg_hum;
         var hour = data[i].hour;
         var day = data[i].day;
         var month = data[i].month;
-        var themac=data[i].mac;
+        var themac = data[i].mac;
 
 
         var timestamp = Date.UTC(2020, parseInt(month) - 1, parseInt(day), parseInt(hour));
-        var numstamp=parseInt(timestamp);
+        var numstamp = parseInt(timestamp);
         // var tempRow = [timestamp, parseFloat(temp)];
         // var humRow = [parseFloat(hum)];
-        if(choose.includes(themac)){
-          if (check.has(numstamp)){
-            var map3=check.get(numstamp);
-            var temp3=map3.get('temp');
+        if (choose.includes(themac)) {
+          if (check.has(numstamp)) {
+            var map3 = check.get(numstamp);
+            var temp3 = map3.get('temp');
             temp3.push(temp);
-            var hum3=map3.get('hum');
+            var hum3 = map3.get('hum');
             hum3.push(hum);
 
-          }else{
-            var map2=new Map();
-            var temp2=[];
-            var hum2=[];
+          } else {
+            var map2 = new Map();
+            var temp2 = [];
+            var hum2 = [];
             temp2.push(temp);
             hum2.push(hum);
             map2.set('temp', temp2);
@@ -474,39 +488,39 @@
         };
 
       };
-      var temperature_avg=[];
-      var humidity_avg=[];
+      var temperature_avg = [];
+      var humidity_avg = [];
       let average = (array) => array.reduce((a, b) => a + b) / array.length;
       for (let key of check.keys()) {
-        
-        var map4=check.get(key);
-        var avtemp=average(map4.get('temp'));
-        var avhum=average(map4.get('hum'));
-        var temp4=[key,avtemp];
+
+        var map4 = check.get(key);
+        var avtemp = average(map4.get('temp'));
+        var avhum = average(map4.get('hum'));
+        var temp4 = [key, avtemp];
         temperature_avg.push(temp4);
-        var hum4=[key, avhum];
+        var hum4 = [key, avhum];
         humidity_avg.push(hum4);
       };
-      temperature_avg.sort(function(a,b){return a[0]-b[0];});
-      humidity_avg.sort(function(a,b){return a[0]-b[0];});
+      temperature_avg.sort(function (a, b) { return a[0] - b[0]; });
+      humidity_avg.sort(function (a, b) { return a[0] - b[0]; });
 
-    
+
 
       var chartDiv = document.createElement('div');
       chartDiv.className = 'chart';
       chartDiv.style.width = '100%';
-      var x=document.getElementById('w3-sidebar').children;
-      var hs=true;
-      for (var j=0; j<x.length; j++){
-        if (x[j].className=='chart'){
-          chartDiv=x[j];
-          hs=false;
+      var x = document.getElementById('w3-sidebar').children;
+      var hs = true;
+      for (var j = 0; j < x.length; j++) {
+        if (x[j].className == 'chart') {
+          chartDiv = x[j];
+          hs = false;
         }
       };
-      if (hs){
+      if (hs) {
         document.getElementById('w3-sidebar').appendChild(chartDiv);
       };
-      
+
       Highcharts.stockChart(chartDiv, {
 
         rangeSelector: {
