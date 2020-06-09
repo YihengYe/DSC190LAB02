@@ -373,10 +373,10 @@
         var month = data[i].month;
 
 
-        var timestamp = Date.UTC(2020, parseInt(month), parseInt(day), parseInt(hour));
+        var timestamp = Date.UTC(2020, parseInt(month) - 1, parseInt(day), parseInt(hour));
         var numstamp=parseInt(timestamp);
-        var tempRow = [timestamp, parseFloat(temp)];
-        var humRow = [parseFloat(hum)];
+        // var tempRow = [timestamp, parseFloat(temp)];
+        // var humRow = [parseFloat(hum)];
         if (check.has(numstamp)){
           var map3=check.get(numstamp);
           var temp3=map3.get('temp');
