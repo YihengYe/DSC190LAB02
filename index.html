@@ -7,16 +7,8 @@
   <meta name="viewport" content="initial-scale=1.0">
   <meta charset="utf-8">
   <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
-
-<script src="https://code.highcharts.com/highcharts-3d.js"></script>
-<script src="https://code.highcharts.com/modules/exporting.js"></script>
-<script src="https://code.highcharts.com/modules/export-data.js"></script>
-<script src="https://code.highcharts.com/modules/accessibility.js"></script>
-
-
   <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
   <script src="https://code.highcharts.com/stock/highstock.js"></script>
-  <script src="https://code.highcharts.com/highcharts-3d.js"></script>
   <script src="https://code.highcharts.com/stock/modules/data.js"></script>
   <script src="https://code.highcharts.com/stock/highcharts-more.js"></script>
   <script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
@@ -276,6 +268,7 @@
           infowindow.open(map, marker);
           updateInfo(infowindow, devmac);
           // exinfowindow.open(map, marker);
+          drawTempHumChart(infowindow, devmac);
         });
 
         marker.addListener('mouseout', function () {
@@ -457,22 +450,6 @@
       };
     };
 
-    // function drawScatterPlot() {
-    //   var xmlhttp = new XMLHttpRequest();
-    //   xmlhttp.onreadystatechange = function () {
-    //     if (this.readyState == 4 && this.status == 200) {
-    //       var statsObj = JSON.parse(this.responseText);
-    //       console.log(statsObj)
-    //     }
-    //   }
-    //   var cmdObj;
-    //   cmdObj = { "cmd": "WEATHER"};
-    //   var cmdStr = JSON.stringify(cmdObj);
-    //   xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
-    //   xmlhttp.setRequestHeader('Content-Type', 'application/json');
-    //   xmlhttp.send(cmdStr);
-    // };
-
     function drawHighChart(data) {
       var check = new Map();
       for (var i = 0; i < data.length; i++) {
@@ -626,7 +603,7 @@
       var scatterClass2 = [];
 
       for (var k = 0; k < temperature_avg.length; k++) {
-        var windSpeed = -0.3539 * temperature_avg[k][1] - 0.0713 * humidity_avg[k][1] + 19.6735;
+        // var windSpeed = -0.3539 * temperature_avg[k][1] - 0.0713 * humidity_avg[k][1] + 19.6735;
         var toPush = [temperature_avg[k][1], humidity_avg[k][1]]
         scatterClass1.push(toPush)
       };
@@ -659,7 +636,6 @@
             text: 'Hum (%)'
           }
         },
-       
         legend: {
           layout: 'vertical',
           align: 'left',
@@ -695,9 +671,14 @@
           }
         },
         series: [{
+          name: 'cloudy',
           color: 'rgba(223, 83, 83, .5)',
           data: scatterClass1,
 
+        }, {
+          name: 'clear',
+          color: 'rgba(119, 152, 191, .5)',
+          data: [[]]
         }]
       });
 
