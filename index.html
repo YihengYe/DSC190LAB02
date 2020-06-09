@@ -16,6 +16,7 @@
 
   <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
   <script src="https://code.highcharts.com/stock/highstock.js"></script>
+  <script src="https://code.highcharts.com/highcharts-3d.js"></script>
   <script src="https://code.highcharts.com/stock/modules/data.js"></script>
   <script src="https://code.highcharts.com/stock/highcharts-more.js"></script>
   <script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
@@ -275,7 +276,6 @@
           infowindow.open(map, marker);
           updateInfo(infowindow, devmac);
           // exinfowindow.open(map, marker);
-          drawTempHumChart(infowindow, devmac);
         });
 
         marker.addListener('mouseout', function () {
@@ -627,14 +627,14 @@
 
       for (var k = 0; k < temperature_avg.length; k++) {
         var windSpeed = -0.3539 * temperature_avg[k][1] - 0.0713 * humidity_avg[k][1] + 19.6735;
-        var toPush = [temperature_avg[k][1], humidity_avg[k][1], windSpeed]
+        var toPush = [temperature_avg[k][1], humidity_avg[k][1]]
         scatterClass1.push(toPush)
       };
 
 
       Highcharts.chart(chartDiv2, {
         chart: {
-          type: 'scatter3d',
+          type: 'scatter',
           zoomType: 'xy'
         },
         title: {
@@ -659,11 +659,7 @@
             text: 'Hum (%)'
           }
         },
-        zAxis: {
-          min: 0,
-          max: 20,
-          showFirstLabel: false
-        },
+       
         legend: {
           layout: 'vertical',
           align: 'left',
@@ -699,14 +695,9 @@
           }
         },
         series: [{
-          name: 'cloudy',
           color: 'rgba(223, 83, 83, .5)',
           data: scatterClass1,
 
-        }, {
-          name: 'clear',
-          color: 'rgba(119, 152, 191, .5)',
-          data: [[]]
         }]
       });
 
