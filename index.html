@@ -300,11 +300,10 @@
             for (var i = 0; i < statsObj.weather.length; i++) {
               var temp = statsObj.weather[i].avg_temp;
               var hum = statsObj.weather[i].avg_hum;
-              var hour = statsObj.weather[i].hour;
               var day = statsObj.weather[i].day;
               var month = statsObj.weather[i].month;
               
-              var timestamp = '2020-'+ month + '-' + day + '-' +  hour;
+              var timestamp = '2020-'+ month + '-' + day;
 
 
               ourClass += `<tr><td>${timestamp}</td><td>${temp}</td><td>${hum}</td></tr>`
