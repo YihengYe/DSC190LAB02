@@ -398,8 +398,8 @@ def logmc(cursor, params):
 
 def post_weather(cursor,params):
     mac=params['devmac']
-    sql="SELECT avg(temp) as avg_temp, avg(hum) as avg_hum, HOUR(timerstamp) as hour FROM iotdb.mcdata \
-        WHERE mac='{0}' AND NOW()<=DATE_ADD(timerstamp, INTERVAL 24 HOUR) GROUP BY hour".format(mac)
+    sql="SELECT avg(temp) as avg_temp, avg(hum) as avg_hum, HOUR(timerstamp) as hour, DATE(timerstamp) as date FROM iotdb.mcdata \
+        WHERE mac='{0}' AND NOW()<=DATE_ADD(timerstamp, INTERVAL 120 HOUR) GROUP BY hour".format(mac)
     try:
         data = execute_sql(sql, cursor)
     except Exception as err:
