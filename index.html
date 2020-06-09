@@ -489,6 +489,7 @@
       };
       var temperature_avg = [];
       var humidity_avg = [];
+      var wind=[];
       let average = (array) => array.reduce((a, b) => a + b) / array.length;
       for (let key of check.keys()) {
 
@@ -499,9 +500,13 @@
         temperature_avg.push(temp4);
         var hum4 = [key, avhum];
         humidity_avg.push(hum4);
+        var win4=-0.3539*avtemp-0.0713*avhum+19.6735;
+        var wind4=[key, win4];
+        wind.push(wind4);
       };
       temperature_avg.sort(function (a, b) { return a[0] - b[0]; });
       humidity_avg.sort(function (a, b) { return a[0] - b[0]; });
+      wind.sort(function (a, b) { return a[0] - b[0]; });
 
 
       var chartDiv = document.createElement('div');
@@ -561,7 +566,7 @@
         }],
 
         title: {
-          text: 'Average Temperature and Humidity variation'
+          text: 'Average Temperature and Humidity variation--with predicted wind speed'
         },
 
         series: [{
@@ -577,7 +582,11 @@
             valueSuffix: '%'
           },
           yAxis: 1,
-        }],
+        },{
+          name: "predicted wind speed",
+          data:wind,
+        }
+        ],
 
       });
 
