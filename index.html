@@ -107,7 +107,7 @@
 
       var globalData;
       placeMarker();
-      getGlobalData(globalData); //return globalData
+      getGlobalData(); //return globalData
 
       drawHighChart(globalData);
       // place marker by devices
@@ -326,7 +326,7 @@
         xmlhttp.send(cmdStr);
       };
 
-      function getGlobalData(globalData) {
+      function getGlobalData() {
         var xmlhttp = new XMLHttpRequest();
         xmlhttp.onreadystatechange = function () {
           if (this.readyState == 4 && this.status == 200) {
@@ -334,7 +334,6 @@
             var statsObj = JSON.parse(this.responseText);
 
             globalData = statsObj.weather;
-            console.log(globalData)
             // for (var i = 0; i < globalData.length; i++) {
             //   var temp = globalData[i].avg_temp;
             //   var hum = globalData[i].avg_hum;
@@ -358,16 +357,14 @@
         var jObj;
         jObj = { cmd: "WEATHER" };
         var cmdStr = JSON.stringify(jObj);
-        xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", true);
+        xmlhttp.open("POST", "http://dsc-iot.ucsd.edu/gid03/cgi-bin/API.py", false);
         xmlhttp.setRequestHeader('Content-Type', 'application/json');
         xmlhttp.send(cmdStr);
       };
-
     };
 
     function drawHighChart(data) {
-
-      console.log(data);
+      var check=new Map();
       for (var i = 0; i < data.length; i++) {
         var temp = data[i].avg_temp;
         var hum = data[i].avg_hum;
@@ -376,66 +373,46 @@
         var month = data[i].month;
 
 
-        var timestamp = Date.UTC(2020, parseInt(month), parseInt(day));
+        var timestamp = Date.UTC(2020, parseInt(month), parseInt(day), parseInt(hour));
+        var numstamp=parseInt(timestamp);
         var tempRow = [timestamp, parseFloat(temp)];
         var humRow = [parseFloat(hum)];
+        if (check.has(numstamp)){
+          var map3=check.get(numstamp);
+          var temp3=map3.get('temp');
+          temp3.push(temp);
+          var hum3=map3.get('hum');
+          hum3.push(hum);
 
-      tempData.push(tempRow);
-      humData.push(humRow);
+        }else{
+          var map2=new Map();
+          var temp2=[];
+          var hum2=[];
+          temp2.push(temp);
+          hum2.push(hum);
+          map2.set('temp', temp2);
+          map2.set('hum', hum2);
+          check.set(numstamp, map2);
+
+        }
+
+      };
+      var temperature_avg=[];
+      var humidity_avg=[];
+      let average = (array) => array.reduce((a, b) => a + b) / array.length;
+      for (let key of check.keys()) {
+        
+        var map4=check.get(key);
+        var avtemp=average(map4.get('temp'));
+        var avhum=average(map4.get('hum'));
+        var temp4=[key,avtemp];
+        temperature_avg.push(temp4);
+        var hum4=[key, avhum];
+        humidity_avg.push(hum4);
       };
 
 
-      all_data = {};
-
-      var selected_mac = []
-
-      all_dates = []
-
-      for (var key in data) {
-
-        if (true) {
-          selected_mac.push(key);
-          for (var dates in data[key]) {
-            all_data[new Date(dates).getTime()] = [[], []];
-          }
-        }
-      }
-
-      for (var key in all_data) {
-        all_dates.push(key);
-      }
-
-      all_dates.sort();
-
-      for (var key in selected_mac) {
-        mac_key = selected_mac[key];
-        for (var dates in data[mac_key]) {
-          current_time = new Date(dates).getTime()
-          all_data[current_time][0].push(parseFloat(data[mac_key][dates][0]))
-          all_data[current_time][1].push(parseFloat(data[mac_key][dates][1]))
-        }
-      }
-
-      var temperature = [];
-      var humidity = [];
-      var temperature_avg = [];
-      var humidity_avg = [];
-
-      const arrAvg = arr => arr.reduce((a, b) => a + b, 0) / arr.length
-
-      for (var key in all_dates) {
-        current_date = all_dates[key];
-        arr = all_data[current_date];
-        temperature.push([parseInt(current_date), Math.min.apply(Math, all_data[current_date][0]), Math.max.apply(Math, all_data[current_date][0])])
-
-
-        temperature_avg.push([parseInt(current_date), parseFloat(arrAvg(arr[0]))]);
-
-        humidity.push([parseInt(current_date), Math.min.apply(Math, all_data[current_date][1]), Math.max.apply(Math, all_data[current_date][1])])
-
-        humidity_avg.push([parseInt(current_date), parseFloat(arrAvg(arr[1]))]);
-      }
-
+    
 
       var chartDiv = document.createElement('div');
       chartDiv.className = 'chart';
