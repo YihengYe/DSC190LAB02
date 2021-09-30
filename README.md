@@ -4,7 +4,7 @@ Authors:
 - Yiheng Ye, yiy291@ucsd.edu
 - Yifei Ning, y3ning@ucsd.edu
 
-Final website: http://dsc-iot.ucsd.edu/gid03/index.html (Serve down now)
+Final website: http://dsc-iot.ucsd.edu/gid03/index.html (Server is down now)
 
 Important code/documents:
 - API.py: Python api to transport sensor data to MySQL database and conduct integration on data including showing hourly average weather status.
