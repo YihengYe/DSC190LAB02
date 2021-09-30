@@ -1,6 +1,16 @@
 # Internet of Things--Visualization of San Diego Micro-climate And Local Wind Speed Prediction
 
-Final website: http://dsc-iot.ucsd.edu/gid03/index.html
+Authors:
+- Yiheng Ye, yiy291@ucsd.edu
+- Yifei Ning, y3ning@ucsd.edu
+
+Final website: http://dsc-iot.ucsd.edu/gid03/index.html (Serve down now)
+
+Important code/documents:
+- API.py: Python api to transport sensor data to MySQL database and conduct integration on data including showing hourly average weather status.
+- Arduino code: Code for sensors to receive weather data like temperature and humidity.
+- FINAL03.html: Web presentation code based on Google map for our data collected and other analysis.
+- wind_speed_prediction.ipynb: Notebook that creates linear regression model for wind speed prediction using temperature and humidity.
 
 
 In our project, we used DHT sensor data from all teams to model and predict the wind speed by temperature and humidity.
